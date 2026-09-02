@@ -1,0 +1,90 @@
+# 资料索引
+
+最后更新：2026-09-01
+
+写入 `docs/` 的每个事实都应能在这里找到出处。新增条目时补上访问日期——鸿蒙官方文档会随版本改写，URL 不变但内容会变。
+
+可信度标注：
+- **A** 华为官方文档 / 官方仓库 / 官方大会公告
+- **B** 官方渠道的二手转述（媒体报道官方发布会等）
+- **C** 社区文章、论坛帖、第三方博客 —— 只作线索，结论需回到 A 类核实
+
+## 索引怎么用
+
+本轮共引用官方文档 **150+ 页**，逐页平铺会让这张表无法维护。因此分两级：
+
+- **这里**登记每个主题的一手入口、可信度、访问日期。
+- **每篇 `docs/` 文档文末**都有自己的完整来源表（slug、URL、文档 version、`updatedDate`、访问日期），那是逐条事实的出处。
+
+URL 拼法：`https://developer.huawei.com/consumer/cn/doc/<catalog>/<slug>`，`catalog` 见下。
+正文抓取方式见 [00-doc-retrieval.md](00-doc-retrieval.md)，工具是 `tools/hwdoc.py`。
+
+已确认可用的 catalog：
+
+| catalog | 内容 | 备注 |
+| --- | --- | --- |
+| `harmonyos-guides` | 开发指南 | 目录树约 1.2 MB JSON |
+| `harmonyos-references` | API 参考 | 起始版本、权限、错误码看这里 |
+| `harmonyos-releases` | 版本说明与兼容性 | 版本号、现网设备分布 |
+| `AppGallery-Connect` | AGC 文档 | ⚠️ `getCatalogTree` 返回空树，未打通 |
+
+## 一手入口（全部访问日期 2026-09-01，可信度 A）
+
+### 版本与工具链 → `docs/01-platform-landscape.md`
+
+| 主题 | slug | catalog | 文档 version / updated |
+| --- | --- | --- | --- |
+| 26.0.0 版本说明 | `overview-2600` | releases | V6 / 2026-08-29 |
+| 版本号规则变更（取消整数 API Level） | `version-number-26` | releases | V5 / 2026-08-29 |
+| 全版本列表 | `overview-allversion` | releases | V51 / 2026-08-29 |
+| 现网 SDK 版本分布（数据截至 08-20） | `sdk-version-percentage` | releases | V43 / 2026-08-29 |
+| 支持设备 | `support-device` | releases | V62 / 2026-08-29 |
+| 开发工具总览 | `ide-tools-overview` | guides | V112 / 2026-08-28 |
+| Hvigor 与命令行构建 | `ide-hvigor` · `ide-hvigor-commandline` · `ide-command-line-building-app` | guides | V107 / V113 / V114 |
+| Command Line Tools | `command-line-tools-overview` · `ide-commandline-get` | guides | V178 / V110 |
+| 工程结构与配置文件 | `ide-project-structure` · `application-package-structure-stage` · `app-configuration-file` · `module-configuration-file` | guides | V108 / V235 / V235 / V235 |
+| 真机与模拟器 | `ide-run-device` · `ide-emulator-requirements` | guides | V107 / V109 |
+
+### 官方 AI 编码工具 → `docs/04-official-ai-coding-tools.md`
+
+| 主题 | slug | catalog | 文档 version / updated |
+| --- | --- | --- | --- |
+| DevEco CLI 总览 / 安装 / 命令 | `ide-deveco-cli-overview` · `ide-deveco-cli-install` · `ide-deveco-cli-options` · `ide-deveco-cli-developtask` | guides | V6 · V6 · V6 · V1 / 2026-08-28 |
+| DevEco Code 总览 / 安装 / Agent / 模型 | `ide-deveco-code-overview` · `ide-deveco-code-install` · `ide-deveco-code-agent` · `ide-deveco-code-model` | guides | V6 / 2026-08-28 |
+| MCP 与智能体接入 | `ide-agent-mcp` | guides | V55 / 2026-08-28 |
+| CodeGenie（被标「不推荐」者） | `ide-codegenie` · `ide-codegenie-releasenote` | guides | V110 / V93 |
+
+### 端侧 AI 能力 → `docs/02-ondevice-ai-map.md` 与 `docs/ai-kit/`
+
+| Kit | 入口 slug（指南） | 细节笔记（含完整来源表） |
+| --- | --- | --- |
+| Core Speech Kit | `core-speech-introduction` · `texttospeech-guide` · `speechrecognizer-guide` | [core-speech-kit.md](ai-kit/core-speech-kit.md) |
+| Core Vision Kit | `core-vision-introduction` + 8 个能力页 | [core-vision-kit.md](ai-kit/core-vision-kit.md) |
+| Natural Language / Speech / Vision（场景化） | `natural-language-introduction` · `speech-production` · `vision-introduction` | [scenario-kits.md](ai-kit/scenario-kits.md) |
+| MindSpore Lite / NNRt / CANN | `mindspore-lite-kit-introduction` · `neural-network-runtime-kit-introduction` · `cannkit-introduction` | [inference-runtimes.md](ai-kit/inference-runtimes.md) |
+| Intents Kit / Agent Framework Kit | `intents-introduction` · `hmaf-introduction` | [intents-and-agent-framework.md](ai-kit/intents-and-agent-framework.md) |
+
+各 Kit 的 API 参考（起始版本、权限、错误码）在 `harmonyos-references`，slug 见对应笔记文末。
+
+### ArkTS 与术语 → `docs/03-arkts-codegen-rules.md`、`docs/glossary.md`
+
+| 主题 | slug | catalog |
+| --- | --- | --- |
+| 官方术语表 | `glossary` · `arkts-glossary` · `ability-terminology` · `application-package-glossary` · `hmaf-glossary` | guides |
+| ArkTS 入门与 UI 范式 | `arkts-get-started` · `introduction-to-arkts` · `arkts-ui-development-overview` | guides |
+| Stage 模型 | `stage-model-development-overview` · `application-package-overview` | guides |
+| API 参考总入口 | `development-intro-api` | references |
+
+规则清单里每条规则的具体依据 slug 见 `docs/03-arkts-codegen-rules.md` 的规则表与文末来源表。
+
+## 非官方来源（B / C 类）
+
+| 主题 | 来源 | 可信度 | 访问日期 | 用途 |
+| --- | --- | --- | --- | --- |
+| HarmonyOS 7 Developer Beta / API 26 时间点 | huaweicentral.com、dataconomy.com（2026-06-12）、nokiapoweruser.com | B | 2026-09-01 | 仅交叉印证时间点；版本口径以 `overview-2600`、`version-number-26` 为准 |
+| Core Speech Kit 用法 | dev.to、hashnode 等个人博客 | C | 2026-09-01 | 仅作检索线索，未采信任何结论 |
+
+## 注意
+
+- 官方文档中有大量步骤是**截图**，`tools/hwdoc.py` 取不到图内信息，这是本通道的固有盲区。遇到关键步骤缺失时需人工打开页面确认。
+- 本轮所有 `docs/` 结论均为文档研读所得，**无任何编译或运行验证**（本机无鸿蒙工具链）。

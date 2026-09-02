@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# HarmonyOS / DevEco Studio 构建产物（harmony/ 工程建立后生效）
+build/
+.hvigor/
+.cxx/
+oh_modules/
+local.properties
+*.hap
+*.hsp
+*.har
+.idea/
+.clangd
+.clang-format
+.clang-tidy
+
+# 签名与密钥（严禁入库）
+*.p12
+*.cer
+*.p7b
+*.csr
+signing/
+
+# 临时与日志
+node_modules/
+*.log
+.tmp/
