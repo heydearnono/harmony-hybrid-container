@@ -45,25 +45,53 @@ python3 tools/hwdoc.py doc core-speech-introduction # 正文
 ## 两条硬规矩
 
 1. **每个事实都要有来源和日期**，查不到就标 `⚠️ 待核实`，不要用通顺的句子掩盖不确定。
-2. 代码片段默认标注**未编译验证**；只有真的过了 `devecocli build` 才能摘掉这个标注。
+2. 代码片段默认标注**未编译验证**。`harmony/HybridShell/` 里的代码已过 `devecocli build`
+   （OpenHarmony API 23），标注改写为「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」——
+   **编译通过不等于运行验证**，运行期语义的规则仍只有文档依据。
 
 细则见 [CLAUDE.md](CLAUDE.md)。
 
-## 工具链现状（2026-09-02 实测）
+## 工程现状（2026-09-03）
+
+`harmony/HybridShell/` —— **已真编译通过，产出 HAP。**
+
+| 环节 | 状态 |
+| --- | --- |
+| `devecocli create` 生成官方模板工程（30 文件） | ✅ 已跑通 |
+| 混合容器代码（三条通信路径 + 本地 H5，`Index.ets` 281 行） | ✅ 已写入 |
+| `devecocli build` 出 HAP | ✅ **已通过**，`BUILD SUCCESSFUL in 3 s 109 ms`，110,930 B 未签名 HAP |
+| ArkTS 类型检查 | ✅ 已过，并用反向实验确认编译器真在查类型 |
+| 在 HarmonyOS SDK 上编译 | ❌ 未做，需人登录下载 CLT |
+| 装设备、跑通 W1–W16 | ❌ 未开始，本机无 OpenHarmony 设备 |
+
+⚠️ **关键限定：走的是免登录的 OpenHarmony API 23 链，产物是 OpenHarmony HAP，不是 HarmonyOS HAP。**
+所以准确说法是「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」。
+
+两条关键发现：**`create` 不需要 SDK，`build` 需要**；**登录门禁只挡 HarmonyOS SDK 本体，
+hvigor / ohpm / OpenHarmony SDK 全是公开直链**。详见 [harmony/README.md](harmony/README.md)、
+[experiments/002](experiments/002-混合容器最小基座/README.md)。
+
+**W1 已由编译器实测确认**：把 `postMessageEvent` 故意写成 `postMessage`，编译器报
+`10505001 Property 'postMessage' does not exist on type 'WebMessagePort'`。
+
+## 工具链现状（2026-09-03 实测）
 
 全部装在 `~/.local/hmos-toolchain/`，自成一体，不改 `~/.zshrc`，`rm -rf` 即卸载。
 用法：`source harmony/env.sh`。
 
 | 组件 | 状态 |
 | --- | --- |
-| DevEco CLI 1.3.0-stable | ✅ `--version` 通过，16 个命令齐全 |
-| JDK 21（Temurin 21.0.12.1+1 LTS） | ✅ `java -version` 通过，sha256 已对官方值 |
-| Command Line Tools ≥ 26.0.0 | ❌ **唯一卡点**，下载需华为账号 + 动态验证码，Agent 无法代办 |
+| DevEco CLI 1.3.0-stable | ✅ `--version` / `create` / `build` 均实测通过 |
+| JDK 21（Temurin 21.0.12.1+1 LTS） | ✅ 通过，sha256 已对官方值 |
+| 官方工程模板 25 个文件 | ✅ 就在 CLI 包内 `templates/application/`，无需另下 |
+| **OpenHarmony 编译链**（hvigor 6.26.1 + ohpm + Node 22 + SDK 23 五组件） | ✅ **已就位、编译成功**；全部免登录直链，逐件对过官方 sha256 |
+| HarmonyOS Command Line Tools ≥ 26.0.0 | ❌ 仍缺，下载需华为账号 + 动态验证码，Agent 无法代办 |
+| `code-linter` | ❌ OpenHarmony CLT 包内无实体，静态检查这条线仍是空的 |
 | Node.js v24.6.0 / Python 3 / curl / jq | ✅ |
 
-**不装 DevEco Studio 也能创建并编译工程**已验证是官方设计内路径，靠 `DEVECO_CLI_CLT_PATH` 指向 CLT。
-⚠️ 官方文档写的 `DEVECO_CLI_CLI_PATH` 实测**完全无效** —— 对照实验见
-[experiments/001](experiments/001-deveco-cli-无IDE可行性/README.md)。
+⚠️ 官方文档写的 `DEVECO_CLI_CLI_PATH` 实测**完全无效**，真正生效的是 `DEVECO_CLI_CLT_PATH` ——
+对照实验见 [experiments/001](experiments/001-deveco-cli-无IDE可行性/README.md)。
 
-人要做的一步见 [harmony/README.md](harmony/README.md)。
+要 HarmonyOS HAP 时人要做的一步见 [harmony/README.md](harmony/README.md)。
+
 

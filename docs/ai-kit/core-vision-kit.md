@@ -1,6 +1,6 @@
 # Core Vision Kit（基础视觉服务）
 
-最后更新：2026-09-01 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段**未编译验证**（本机无鸿蒙工具链）
+最后更新：2026-09-01 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段**未编译验证**（未落进 `harmony/HybridShell/`；编译链已于 2026-09-03 就位，但没校验过这些片段）
 
 ## 一句话
 
@@ -94,7 +94,7 @@ Core Vision Kit 提供 **8 个**图像类基础视觉能力（OCR / 人脸检测
 ```ts
 // 适用 API Level：textRecognition 起始 4.0.0(10)；init/release 起始 5.0.0(12)
 // 导入路径来源：core-vision-text-recognition-api「导入模块」章节
-// ⚠️ 未编译验证：本机无 DevEco Studio / hvigorw / ohpm
+// ⚠️ 未编译验证：本片段未落进 harmony/HybridShell/
 import { textRecognition } from '@kit.CoreVisionKit';
 import { image } from '@kit.ImageKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';

@@ -1,7 +1,7 @@
 # 实验：DevEco CLI 能否脱离 DevEco Studio 完成工程创建与编译
 
-- 日期：2026-09-01
-- 状态：设计中（未执行；涉及安装动作，需人工确认后再做）
+- 日期：2026-09-01（2026-09-03 更新：`create` 与 `build` 均已实测跑通）
+- 状态：**假设成立**（步 0–4 已执行，步 5 真机/模拟器另立实验）
 - 相关文档：`docs/04-official-ai-coding-tools.md`、`docs/01-platform-landscape.md`
 
 ## 假设
@@ -240,22 +240,33 @@ javac 21.0.12.1
 
 ### 步 4 / 5
 
-（阻塞，等 CLT 就位）
+**步 4（`build` 出 HAP）：✅ 2026-09-03 达成**，但不是靠 HarmonyOS CLT ——
+用的是免登录的 OpenHarmony 编译链（hvigor 6.26.1 + ohpm + Node 22 + OpenHarmony SDK 23，
+装在 `~/.local/hmos-toolchain/clt-oh/`）。`BUILD SUCCESSFUL in 3 s 109 ms`，
+产物 `entry-default-unsigned.hap` 110,930 B。全程无 DevEco Studio、**也无华为账号登录**。
+过程见 `experiments/002-混合容器最小基座` 与 `research-log/2026-09-03-免登录编译打通.md`。
+
+**步 5（真机/模拟器）：⛔ 未做**，本机无 OpenHarmony 设备/模拟器。
 
 ## 结论
 
-**部分结论已可下：假设的前两个环节成立，第三个环节未验。**
+**假设成立**：不装 DevEco Studio 也能创建工程并编译出 HAP。
 
 | 环节 | 状态 |
 | --- | --- |
 | DevEco CLI 能在无 DevEco Studio 的 macOS 上安装并运行 | ✅ 已验证 |
 | 「不装 Studio」是官方设计内的支持路径，靠 `DEVECO_CLI_CLT_PATH` 指向 CLT | ✅ 已验证（含官方文档变量名笔误的实测反证） |
-| `create` / `build` 能在 CLT-only 模式下真正产出 HAP | ⏸ 未验，卡在 CLT 下载需人工登录 |
+| `create` 在 CLT-only 模式下产出官方模板工程 | ✅ 已验证；进一步发现 **`create` 完全不碰 SDK**，只要 `version.txt` 可解析 |
+| `build` 在 CLT-only 模式下真正产出 HAP | ✅ 已验证（**OpenHarmony API 23**；HarmonyOS SDK 侧仍未检验，需人登录下载 CLT） |
+| `code-linter` 静态检查 | ❌ 该 CLT 包内无 codelinter 实体，`$CLT/bin/codelinter` 只是个壳 |
 
 副产物：`harmony/env.sh`（项目本地环境变量脚本，不改动 `~/.zshrc`）。
 
 ## 遗留
 
+- ⚠️ 编译走的是 OpenHarmony 链，**产物是 OpenHarmony HAP**。HarmonyOS SDK 本体的下载仍卡在
+  华为账号 + 动态验证码，Agent 无法代办 —— 所以「CLT-only 模式下 HarmonyOS 侧能否出 HAP」**仍未验**。
 - 真机调试与模拟器不在本实验范围：真机需实名认证 + AGC 签名，模拟器仅支持 Windows X86 与 macOS ARM，需另立实验。
-- `devecocli` 哪些命令强制华为账号登录，官方未列明；步 1、2 可顺带观察。
-- 若假设成立，下一步是让 `docs/03-arkts-codegen-rules.md` 里的示例逐条过编译，把「未编译验证」的标注逐步摘掉。
+- `devecocli` 哪些命令强制华为账号登录，官方未列明；已知 `create` / `build` **都不需要**。
+- 下一步是让 `docs/03-arkts-codegen-rules.md` 里的示例逐条过编译。注意标注要改写而非摘掉：
+  准确说法是「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」。

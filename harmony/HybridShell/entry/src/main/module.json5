@@ -1,0 +1,63 @@
+{
+  "module": {
+    "name": "entry",
+    "type": "entry",
+    "description": "$string:module_desc",
+    "mainElement": "EntryAbility",
+    // ⚠️ 2026-09-03：模板原值是 "phone"（HarmonyOS 侧的设备类型）。
+    //    OpenHarmony SDK 的 sdk/23/ets/api/device-define/ 里只有
+    //    2in1 / default / liteWearable / tablet / tv / wearable，没有 phone，
+    //    hvigor 会在 SyscapTransform 阶段报 00303060「系统能力集交集为空」。
+    //    改回 runtimeOS: "HarmonyOS" 时，这里也要改回 "phone"。
+    "deviceTypes": [
+      "default"
+    ],
+    "deliveryWithInstall": true,
+    "installationFree": false,
+    "pages": "$profile:main_pages",
+    // ArkWeb 必需。web-component-overview 明写访问网页需要该权限；
+    // web-offline-mode 的白屏三步排查第一步也是查这一条。
+    // system_grant 权限，只需声明，不必运行时 requestPermissionsFromUser（R19）。
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
+    "abilities": [
+      {
+        "name": "EntryAbility",
+        "srcEntry": "./ets/entryability/EntryAbility.ets",
+        "description": "$string:EntryAbility_desc",
+        "icon": "$media:layered_image",
+        "label": "$string:EntryAbility_label",
+        "startWindowIcon": "$media:startIcon",
+        "startWindowBackground": "$color:start_window_background",
+        "exported": true,
+        "skills": [
+          {
+            "entities": [
+              "entity.system.home"
+            ],
+            "actions": [
+              "ohos.want.action.home"
+            ]
+          }
+        ]
+      }
+    ],
+    "extensionAbilities": [
+      {
+        "name": "EntryBackupAbility",
+        "srcEntry": "./ets/entrybackupability/EntryBackupAbility.ets",
+        "type": "backup",
+        "exported": false,
+        "metadata": [
+          {
+            "name": "ohos.extension.backup",
+            "resource": "$profile:backup_config"
+          }
+        ],
+      }
+    ]
+  }
+}

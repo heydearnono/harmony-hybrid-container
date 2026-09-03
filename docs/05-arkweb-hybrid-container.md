@@ -1,8 +1,22 @@
 # ArkWeb 与混合容器
 
-最后更新：2026-09-03 ｜ 全部代码片段**未编译验证**（工具链缺 Command Line Tools，见 `harmony/README.md`）
+最后更新：2026-09-03 ｜ 代码片段验证状态：**已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行**
 
 本项目主线方向的入口文档。讲清三件事：ArkWeb 是什么、原生与 H5 怎么互相调、本地 H5 资源怎么加载。
+
+> **本文的片段已落成真实工程并真编译过**：`harmony/HybridShell/`（2026-09-03）。
+> 三条通信路径写在 `entry/src/main/ets/pages/Index.ets`（281 行），H5 侧在 `entry/src/main/resources/rawfile/`。
+> `devecocli build` → `BUILD SUCCESSFUL in 3 s 109 ms`，产出 110,930 B 的未签名 HAP。
+>
+> ⚠️ **三条限定，缺一不可**：
+> 1. 走的是**免登录的 OpenHarmony API 23** 链，产物是 OpenHarmony HAP，**不是 HarmonyOS HAP**。
+>    OpenHarmony SDK 是子集，过了它不等于过 HarmonyOS SDK。
+> 2. **编译通过 ≠ 运行验证**。靠 API 签名成立的规则（W1/W5/W12/W16）过了类型检查；
+>    W2/W3/W4/W9/W10/W11/W15 是运行期语义，编译器管不着。
+> 3. 本机无 OpenHarmony 设备/模拟器，**一行都没跑过**。
+>
+> 所以「未编译验证」这个标注可以改写为上面的准确说法，但**不能简单摘掉**。
+> W1 是唯一被机器正面确认的一条（反向实验，见 `docs/03`）。进展见 `experiments/002-混合容器最小基座`。
 
 ## 结论先行
 
@@ -476,7 +490,9 @@ Web({ src: data.url, controller: data.controller })
 
 ## 未确认
 
-- ⚠️ **所有代码片段未编译验证。** Command Line Tools 未到位，见 `harmony/README.md`。
+- 🔶 **代码片段的验证状态见本文开头**。简版：落进 `harmony/HybridShell/` 的实现（三条通信路径 + `$rawfile` 加载）
+  **已过 OpenHarmony API 23 编译**，W1 由编译器反向实验正面确认；本文正文里的片段是按官方示例
+  改写的**最小形式**，与工程里的实现不是同一份代码，仍标「未编译验证」。三条路径**一条都没运行过**。
 - ✅ 起始版本已从 `harmonyos-references` 的 `@ohos.web.webview` 补齐（见「起始版本」一节，2026-09-02）。
   仍未查的是 `Web` **组件属性/事件**（`onInterceptRequest`、`javaScriptProxy`、`fileAccess` 等）的起始版本
   —— 那些在**组件描述**页而非 webview 模块页，⚠️ 待查。

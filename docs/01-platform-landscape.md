@@ -1,6 +1,6 @@
 # 平台与工具链现状
 
-最后更新：2026-09-01 ｜ 事实来源见文末来源表 ｜ 本机无鸿蒙工具链，未做任何编译验证
+最后更新：2026-09-03 ｜ 事实来源见文末来源表 ｜ 本机工具链状态：**编译链已就位并实测通过**（免登录 OpenHarmony API 23），缺 HarmonyOS SDK 与设备/模拟器
 
 ## 结论摘要
 
@@ -264,6 +264,13 @@ DevEco Studio 是「开箱即用」打包：HarmonyOS SDK、Node.js、Hvigor、O
 ## 在没有 DevEco Studio 的机器上能做什么
 
 本机实测（2026-09-01）：macOS 15.7.3 (24G419) / arm64 / `node v24.6.0` / `npm 11.5.1` / `python3 3.9.6`；`java` 未安装；`hvigorw` `ohpm` `hdc` `codelinter` `deveco` `devecocli` 全部 `NOT FOUND`；`/Applications/DevEco-Studio.app` 不存在。
+
+> **⚠️ 下面这张表是 2026-09-01 的快照，已被 2026-09-03 的实测大幅推翻。**
+> 现状：DevEco CLI + JDK 21 + 免登录 OpenHarmony 编译链（hvigor 6.26.1 + ohpm + Node 22 + SDK 23）
+> 都装在 `~/.local/hmos-toolchain/`，**「编译构建 HAP」「安装依赖」「生成官方标准工程骨架」三项已从
+> 「不能做」变成「已做到」** —— `harmony/HybridShell/` 出了 110,930 B 的 HAP。
+> 仍然不能做的是：**HarmonyOS SDK 上编译**（需人登录下载 CLT）、**静态检查**（该 CLT 包内无 codelinter 实体）、
+> **真机/模拟器运行**（无设备）、**签名到发布**（无 AGC 证书）。见 `harmony/README.md`。
 
 **硬件与系统层面本机是够的**：macOS 15 ≥ DevEco Studio 的 macOS(ARM) 12-15 要求、≥ DevEco Code 的 macOS 15+ 要求；Apple Silicon 满足模拟器「只支持 Apple Silicon」的要求；Node 24.6.0 ≥ DevEco Code/CLI 要求的 22+。**缺的只是没装。**
 

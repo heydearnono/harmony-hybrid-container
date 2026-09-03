@@ -1,6 +1,6 @@
 # ArkTS 代码生成规则（给 AI 用的避坑清单）
 
-最后更新：2026-09-03 ｜ 事实来源：华为官方文档（见文末来源表）｜ 所有代码片段**未编译验证**（本机无鸿蒙工具链）
+最后更新：2026-09-03 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段的验证状态：**W1 已由 ArkTS 编译器实测确认**；其余落进 `harmony/HybridShell/` 的片段为「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」；未落进工程的片段仍是**未编译验证**
 
 ## 怎么用这份清单
 
@@ -328,7 +328,7 @@ W1–W8 来自 `harmonyos-guides` 的指南页，W9–W16 来自 `harmonyos-refe
 
 | 编号 | 陷阱 | 表现 | 依据 slug |
 | --- | --- | --- | --- |
-| W1 | 消息端口两侧方法名**不对称**：ArkTS 侧是 `onMessageEvent` / `postMessageEvent`，H5 侧才是 `onmessage` / `postMessage` | 在 ArkTS 侧写 `port.postMessage()` —— 类型错或静默无效 | web-app-page-data-channel |
+| W1 | 消息端口两侧方法名**不对称**：ArkTS 侧是 `onMessageEvent` / `postMessageEvent`，H5 侧才是 `onmessage` / `postMessage` | 在 ArkTS 侧写 `port.postMessage()` —— **✅ 2026-09-03 实测：编译期直接报错** `10505001 Property 'postMessage' does not exist on type 'WebMessagePort'`（不是静默无效） | web-app-page-data-channel |
 | W2 | 同一份代码里有两个 `postMessage` 语义：`controller.postMessage(name, ports, uri)` 是**把端口送给 H5**，`port.postMessageEvent(data)` 才是**发数据** | 混用后通道建不起来，无报错 | 同上 |
 | W3 | `WebMessage` 只支持 `string` 与 `ArrayBuffer`，**传对象必须 `JSON.stringify`**。注意这只是**基础协议**的限制——扩展协议 `postMessageEventExt` / `onMessageEventExt`（API 10+，载体 `WebMessageExt`）支持更丰富的数据类型 | 「H5 发消息应用侧收不到」，官方 FAQ 把这个列为第一原因 | 同上 · arkts-apis-webview-webmessageport |
 | W4 | `registerJavaScriptProxy()` 注册后**不会立即生效**，要等下次加载或显式 `refresh()` | 注册完马上调，前端报对象未定义 | web-in-page-app-function-invoking |
@@ -397,14 +397,24 @@ W1–W8 来自 `harmonyos-guides` 的指南页，W9–W16 来自 `harmonyos-refe
 - ⚠️ `ide-oh-package-json5` 所属 catalogName 未确认（经 `doc <slug>` 直取正文，未定位其目录树位置）。
 - ⚠️ `arkts-routing`、`arkts-router-to-navigation` 只取到标题，未记录 version 与更新时间。
 - ⚠️ 幻觉清单中的「未检索到」基于目录树节点名与页面正文检索，不等于该 API 一定不存在。
-- ⚠️ 所有代码片段**未编译验证**：本机无 DevEco Studio / hvigorw / ohpm（2026-09-01 核实）。片段按官方示例改写为最小形式，改写过程可能引入错误。
+- 🔶 **代码片段的验证状态分三档**（2026-09-03 免登录 OpenHarmony 编译链打通后重写）：
+  1. **✅ 已过编译**：落进 `harmony/HybridShell/entry/src/main/ets/pages/Index.ets` 的 281 行
+     （W1–W16 逐条标了规则编号）已过 `devecocli build`，`BUILD SUCCESSFUL in 3 s 109 ms`。
+     准确说法是「已过 **OpenHarmony API 23** 编译，未在 HarmonyOS SDK 上编译，未运行」——
+     OpenHarmony SDK 是子集，过了它**不等于**过 HarmonyOS SDK。
+  2. **✅ 编译器正面确认**：只有 W1。反向实验把 `postMessageEvent` 改成 `postMessage`，
+     编译器报 `10505001 Property 'postMessage' does not exist on type 'WebMessagePort'`（`Index.ets:177:21`）。
+     推论：靠 API 签名成立的规则（W5/W12/W16、R2/R16 等）同样过了类型检查。
+  3. **⚠️ 仍未编译验证**：未落进工程的片段。且 `code-linter` 至今跑不起来
+     （OpenHarmony CLT 包内无 codelinter 实体，`$CLT/bin/codelinter` 只是个壳），静态检查这条线是空的。
 - ⚠️ 「适用 API Level」只标注官方明确写出的起始版本，未逐条向官方确认下限。
 - ⚠️ K1–K12 全部来自文档研读，**无一条经实机调用验证**。其中 K3（640/1280 字节、20/40 ms）、K5（TTS 实例设备级共享）、K7（并发返回系统繁忙）都是最需要实测确认的行为型结论。
 - ⏳ K12 是时效性信息（试用期免费至 2026-12-31），2027 年起须重新核实计费口径。
-- ⚠️ W1–W27 同样**无一条经实机验证**，全部来自 2026-09-02 / 2026-09-03 抓取的官方文档。
+- ⚠️ **W2/W3/W4/W9/W10/W11/W15 属运行期语义，编译通过不构成验证**，仍只有文档依据。
+  W1 之外的 W 系列**无一条经实机验证**，全部来自 2026-09-02 / 2026-09-03 抓取的官方文档。
   但与 K 系列不同：**ArkWeb 官方明确支持模拟器**（`web-component-overview`），
-  所以 W 系列是**可以被验证的**，不必等真机。这应是 CLT 到位后的优先动作，
-  已立 `experiments/002-混合容器最小基座`。
+  所以 W 系列是**可以被验证的**，不必等真机。现在的卡点已不是工具链而是**没有设备/模拟器**，
+  见 `experiments/002-混合容器最小基座` 的步 3–8。
   ⚠️ 一处口径冲突：`arkts-apis-webview` 模块描述页写「示例效果请**以真机运行为准**」，
   与指南页的「支持模拟器」并不矛盾（一个讲准确性、一个讲可运行性），但**哪些能力在模拟器上有差异未确认**。
 - ✅ W1–W16 的起始版本已补齐（见 `docs/05` 的「起始版本」一节）：模块首批接口 **API 9**，

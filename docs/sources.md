@@ -111,6 +111,25 @@ API 参考（catalog `harmonyos-references`，访问日期 2026-09-02）：
 `onNativeEmbed*`、`onInterceptRequest`、`javaScriptProxy`、`fileAccess`、`sharedRenderProcessToken`）
 的起始版本——这些在**组件描述**页，不在 webview 模块页，未查。
 
+## 工具链下载源（免登录直链，访问日期 2026-09-03，可信度 A）
+
+这三处是「不登录华为账号也能拿到一套真编译器」的全部依据。装法与代价见
+`harmony/README.md` 的「另一条路」、`research-log/2026-09-03-免登录编译打通.md`。
+
+| 件 | URL | 校验方式 | 实测 |
+| --- | --- | --- | --- |
+| CLT 外壳（hvigor 6.26.1 + ohpm 26.0.0.410，`sdk/` 与 `tool/node/` 是空占位） | `https://repo.huaweicloud.com/openharmony/compiler/hvigor/6.26.1/command-line-tools.zip` | 同目录 `.sha256` | 77,819,058 B，✅ 对上 `6db6883a…c756079` |
+| `tool/node`（Node 22.14.0 darwin-arm64） | `https://repo.huaweicloud.com/nodejs/v22.14.0/node-v22.14.0-darwin-arm64.tar.gz` | **nodejs.org 的 `SHASUMS256.txt`**（刻意不用镜像自报值） | 47,035,396 B，✅ 对上 |
+| OpenHarmony SDK API 23 五组件（6.1.0.32） | `POST https://repo.harmonyos.com/sdkmanager/v5/ohos/getSdkList`，体 `{"osType":"darwin","osArch":"arm64","supportVersion":"26.0-ohos-single-1"}` | 响应里每项自带 `url` + `size` + `checksum` | 55 个组件**无鉴权**；下载 1,255 MB，解开 4.0 GB，✅ 逐件对过 |
+| ohpm 仓库 | `https://ohpm.openharmony.cn/` | — | ✅ `@ohos/hamock`、`@ohos/hypium` 一次拉通 |
+
+- ⚠️ `osType` 在 OpenHarmony 分支必须填 **`darwin`**（原值直传）；填 `mac` → `139403 参数校验未通过`。
+- ⚠️ **登录门禁只挡 HarmonyOS SDK 本体。** HarmonyOS 侧的 `getSdkList` 虽也免鉴权，但只返回
+  模拟器系统镜像，没有 ets / toolchains；`developer.huawei.com` 的 Command Line Tools 下载页
+  要 Huawei ID + 动态验证码。
+- ❌ **未采用**三方转载的 HarmonyOS SDK 包：无官方 sha256 可校验，且含可执行二进制、
+  会直接进入编译产物链路。
+
 ## 非官方来源（B / C 类）
 
 | 主题 | 来源 | 可信度 | 访问日期 | 用途 |
@@ -121,4 +140,7 @@ API 参考（catalog `harmonyos-references`，访问日期 2026-09-02）：
 ## 注意
 
 - 官方文档中有大量步骤是**截图**，`tools/hwdoc.py` 取不到图内信息，这是本通道的固有盲区。遇到关键步骤缺失时需人工打开页面确认。
-- 本轮所有 `docs/` 结论均为文档研读所得，**无任何编译或运行验证**（本机无鸿蒙工具链）。
+- `docs/` 的结论绝大多数来自文档研读。**2026-09-03 起有了一个机器裁判**：
+  `harmony/HybridShell/` 的 281 行 ArkTS 已过 `devecocli build`（OpenHarmony API 23），
+  W1 由反向实验正面确认。但**编译通过不等于运行验证**，运行期语义的结论仍只有文档依据；
+  `code-linter` 至今没有实体，静态检查这条线是空的。

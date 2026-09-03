@@ -1,6 +1,6 @@
 # Core Speech Kit（基础语音服务）
 
-最后更新：2026-09-01 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段**未编译验证**（本机无鸿蒙工具链）
+最后更新：2026-09-01 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段**未编译验证**（未落进 `harmony/HybridShell/`；编译链已于 2026-09-03 就位，但没校验过这些片段）
 
 ## 一句话
 
@@ -141,7 +141,7 @@ import { speechRecognizer } from '@kit.CoreSpeechKit';
 ## 最小用法骨架
 
 ```ts
-// 未编译验证（本机无 DevEco Studio / ohpm）。
+// 未编译验证（本片段未落进 harmony/HybridShell/）。
 // 适用 API Level：4.1.0(11) 起（listVoices/downloadVoice 的模块级形式需 5.1.1(19)）
 // 导入路径与 API 名称来源 slug：texttospeech-guide / hms-ai-texttospeech
 //                                speechrecognizer-guide / hms-ai-speechrecognizer

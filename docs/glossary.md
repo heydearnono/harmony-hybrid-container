@@ -123,7 +123,8 @@
 6. ⚠️ 「API Level」这一措辞：当前中文文档统一用「API 版本」；「API level」仅指 26.0.0 之前 `X.Y.Z(N)` 中的 N（OpenHarmony 底座 API level）。用「API Level 12」这类说法与官方口径不完全一致。
 7. ⚠️ DevEco CLI 与 Command Line Tools 的定位边界（是否互相替代、能力是否重叠）未在官方文档中明确说明。
 8. ⚠️ 文档接口返回的 `versionLabels`（如 `hmos-503`）与 HarmonyOS 版本号的对应关系待核实（同 `docs/00-doc-retrieval.md`）。
-9. 本文所有 API 名称、导入路径均**未编译验证**（本机无 DevEco Studio / hvigorw / ohpm）。
+9. 本文所有 API 名称、导入路径均**未编译验证**（本文的词条没有落进 `harmony/HybridShell/`；
+   编译链本身已于 2026-09-03 就位，见 `harmony/README.md`）。
 
 ## 来源
 
