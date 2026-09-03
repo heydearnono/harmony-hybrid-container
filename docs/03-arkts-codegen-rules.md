@@ -1,6 +1,6 @@
 # ArkTS 代码生成规则（给 AI 用的避坑清单）
 
-最后更新：2026-09-01 ｜ 事实来源：华为官方文档（见文末来源表）｜ 所有代码片段**未编译验证**（本机无鸿蒙工具链）
+最后更新：2026-09-03 ｜ 事实来源：华为官方文档（见文末来源表）｜ 所有代码片段**未编译验证**（本机无鸿蒙工具链）
 
 ## 怎么用这份清单
 
@@ -9,6 +9,7 @@
 - `arkts-no-*` 规则 ID 与五位错误码来自官方《从TypeScript到ArkTS的适配规则》，可直接写进 prompt 或 review 意见。该文档只有两级：**错误**（不遵从则编译失败）与**警告**（当前不影响编译，未来可能失败）。R1–R7 全部出自该文档。
 - R8 起是 ArkUI / 工程配置层，官方无统一编号，依据为对应页面的「限制条件」「实现规则」小节。
 - **K1–K12** 是调用端侧 AI Kit 时特有的坑，与语言规则分开列在「端侧 AI Kit 调用陷阱」一节。这些多数不会编译报错，而是运行时静默失效。
+- **W1–W27** 是 ArkWeb / 混合容器（原生 + H5）的坑，列在「ArkWeb 混合容器陷阱」一节。混合容器是本项目当前主线，见 `docs/05-arkweb-hybrid-container.md`。
 - 未标注 API Level 的按全版本适用理解（未逐条向官方确认下限，见「未确认」节）。
 
 ## 规则速查表
@@ -317,6 +318,56 @@ R1–R21 是语言与工程层面的规则，本节是**调用端侧 AI 能力�
 
 ⚠️ Core Vision Kit 的 8 项能力，官方 16 篇正文**从未出现「端侧」「离线」或「需联网」任一表述**。因此不要在生成的代码注释或文档里宣称它们是端侧能力——那是本项目此前自己加的假设，已在 `docs/02-ondevice-ai-map.md` 改标 `⚠️ 未确认`。明确标注了离线的只有 Core Speech Kit 的语音识别（官方原文「语音识别支持的模型类型：离线」）。
 
+## ArkWeb 混合容器陷阱（W1–W27）
+
+访问日期 2026-09-02（W1–W16）与 2026-09-03（W17–W27）。
+W1–W8 来自 `harmonyos-guides` 的指南页，W9–W16 来自 `harmonyos-references`
+的 `@ohos.web.webview` API 参考页，**W17–W27 来自同层渲染 / 渲染模式 / 离线组件 / 进程模型四组指南页**。
+细节与代码见 `docs/05-arkweb-hybrid-container.md`。
+这一组的共同特征：**多数不报编译错，只是收不到消息、加载不出资源，或者白屏。**
+
+| 编号 | 陷阱 | 表现 | 依据 slug |
+| --- | --- | --- | --- |
+| W1 | 消息端口两侧方法名**不对称**：ArkTS 侧是 `onMessageEvent` / `postMessageEvent`，H5 侧才是 `onmessage` / `postMessage` | 在 ArkTS 侧写 `port.postMessage()` —— 类型错或静默无效 | web-app-page-data-channel |
+| W2 | 同一份代码里有两个 `postMessage` 语义：`controller.postMessage(name, ports, uri)` 是**把端口送给 H5**，`port.postMessageEvent(data)` 才是**发数据** | 混用后通道建不起来，无报错 | 同上 |
+| W3 | `WebMessage` 只支持 `string` 与 `ArrayBuffer`，**传对象必须 `JSON.stringify`**。注意这只是**基础协议**的限制——扩展协议 `postMessageEventExt` / `onMessageEventExt`（API 10+，载体 `WebMessageExt`）支持更丰富的数据类型 | 「H5 发消息应用侧收不到」，官方 FAQ 把这个列为第一原因 | 同上 · arkts-apis-webview-webmessageport |
+| W4 | `registerJavaScriptProxy()` 注册后**不会立即生效**，要等下次加载或显式 `refresh()` | 注册完马上调，前端报对象未定义 | web-in-page-app-function-invoking |
+| W5 | `javaScriptProxy` / `registerJavaScriptProxy` **必须配 `deleteJavaScriptRegister()`**，官方明写否则内存泄漏 | 泄漏，不报错 | 同上 |
+| W6 | ArkWeb 内核**禁止 `file` / `resource` 协议跨域**。CORS 白名单只有 `http, arkweb, data, chrome-extension, chrome, https, chrome-untrusted` | `$rawfile` 加载的 index.html 里引用的 js/css 全部被 CORS 拦掉 | web-cross-origin |
+| W7 | `setPathAllowingUniversalAccess()` 一旦设置，**`file` 协议就只能访问列表内资源**，`fileAccess` 行为被覆盖；路径含 `cache/web` 抛 **401**，任一路径不合规则整个列表设置失败 | 本来能读的本地文件读不到了；或直接 401 | 同上 |
+| W8 | 拦截有两套机制且能力不同：`onInterceptRequest` **拿不到 Post Data**；`SchemeHandler` 能拿到、还能覆盖 ServiceWorker，但**必须在请求结束回调里清理资源**否则泄漏 | 用 `onInterceptRequest` 做 POST 转发，永远拿不到请求体 | web-scheme-handler |
+| W9 | **`postMessageEvent` 之前必须先调用 `onMessageEvent`**，否则发送失败（Ext 协议同理：先 `onMessageEventExt`） | 抛 17100010 `Failed to post messages through the port` | arkts-apis-webview-webmessageport |
+| W10 | **前端页面传到应用侧的 `string` 会被视为 JSON 格式数据，需要 `JSON.parse` 反序列化** | 直接当普通字符串用，拿到的是带引号的 JSON 文本 | arkts-apis-webview-webviewcontroller（`runJavaScript` / `runJavaScriptExt` 都写了） |
+| W11 | **`runJavaScriptExt` 必须在 `loadUrl` 完成后调用**，官方指明比如放在 `onPageEnd` 里 | 页面没加载完就调，无效 | 同上 |
+| W12 | `registerJavaScriptProxy` 的**同步与异步方法列表不可同时为空**，否则注册失败；**同一方法在两个列表里重复注册会默认走异步**；异步方法**无法返回值且执行顺序不保证** | 注册静默失败；或以为同步却拿不到返回值 | 同上 |
+| W13 | 注册的对象会**暴露给页面所有 frames**。官方要求「尽可能只在可信 URL 及 HTTPS 场景下注册」，否则可能被恶意攻击 | 加载三方页面时把原生能力整个敞开 | 同上 |
+| W14 | **跨导航（如 `loadUrl`）后 `runJavaScript` 注入的 JavaScript 状态不再保留**（导航前定义的全局变量和函数都不存在）。要跨页面保持状态，官方建议改用 `registerJavaScriptProxy` | 跳页后前端报函数未定义 | 同上 |
+| W15 | `WebviewController` 的方法必须在 controller **已绑定到 `Web` 组件之后**才能调 | 抛 17100001 `The WebviewController must be associated with a Web component.` | 同上 |
+| W16 | `setWebDebuggingAccess(true)` 官方带**安全提示：不建议在正式发布版本中启用**。带 `port` 的无线调试重载是 API 20+，且 `port` 必须 **> 1024** | 调试开关误留到发布版；或 port ≤ 1024 抛异常 | 同上 |
+| W17 | 同层渲染**必须显式** `enableNativeEmbedMode(true)`（默认关闭）。`<embed>` 的 `type` 要以 `native/` 开头；用 `<object>` 必须先 `registerNativeEmbedRule('object', '<type前缀>')` | 页面显示「该插件不支持」 | web-same-layer |
+| W18 | 同层标签的三条硬禁：**不能**把 W3C 标准标签（`<input>`、`<video>`）定义为同层标签；**不能同时**把 `<embed>` 与 `<object>` 都配成同层标签；`registerNativeEmbedRule` 的类型若与 W3C 标准类型重合（官方举例 `("object", "application/pdf")`），ArkWeb **走 W3C 标准行为**不识别为同层标签 | 标签不被识别，静默按普通标签渲染 | 同上 |
+| W19 | **开启同层渲染后，该 `Web` 组件打开的所有页面都不支持 `RenderMode.SYNC_RENDER`** | 「同层渲染」与「超长页面同步渲染」不可兼得，二选一 | 同上 |
+| W20 | 渲染模式的高度上限：默认 `ASYNC_RENDER` 下 `Web` 组件高度**超过 7,680px 物理像素会白屏**；`SYNC_RENDER` 上限 500,000px。**两者都不支持动态切换** | 长页面白屏，且没法运行时改模式救回来 | web-render-mode |
+| W21 | 同层标签受 GPU 限制**最大高度 / 最大纹理 8,000px**；自定义同层组件**最外层容器宽高必须等于同层标签宽高**；每页同层标签**≤ 5 个** | 组件被拉伸；或渲染性能下降 | web-same-layer |
+| W22 | 交互型 ArkUI 同层组件（`TextInput`/`TextArea` 等）必须用 **`Stack` 包裹**同层组件容器与 `BuilderNode`，且 `NodeContainer` 的 `position`/`width`/`height` 与同层标签绑定 | 光标与文本选择框错位；`LoadingProgress`/`Marquee` 动画启停与可见状态不匹配 | 同上（含官方对比图与 FAQ） |
+| W23 | 同层标签**只支持有限 CSS 子集**，`transform` 仅支持 `translate` / `scale`（scale 参数须 ≥ 0），`rotate`、`skew` 不保证；有同层标签的页面**不支持缩放**（`initialScale`、`zoom`、`zoomIn`、`zoomOut` 均不支持）；鼠标/键盘/触摸板事件暂不上报 | 写了 rotate 没效果或表现异常；调缩放接口无效 | 同上 |
+| W24 | **「离线 Web 组件」不是「离线包」**，指用 `NodeContainer` + `NodeController` + `BuilderNode` 离屏预创建、暂不挂树（状态 Hidden + Inactive）的 Web 组件。另：**每个 `Web` 组件约占 200MB 内存**，官方建议**每窗口只用一个** | 按字面理解去找离线资源打包能力，方向错；或一次创建多个组件导致内存被系统终止 | web-offline-mode |
+| W25 | 预渲染必须 `onPageBegin` → `onActive()` 开启、`onFirstMeaningfulPaint` → `onInactive()` **立刻停止**，否则后台持续渲染造成**发热与功耗**。⚠️ `onFirstMeaningfulPaint` **只适用 http/https 页面**（本地 `$rawfile` 场景不可用）；不要预渲染自动播放音视频的页面 | 后台一直烧电；或本地页面拿不到停止时机 | 同上 |
+| W26 | 释放离线 Web 组件**必须先确认未被 `NodeContainer` 绑定**（用 `NodeController` 的 `onBind`/`onUnbind` 跟踪），否则对应 `NodeContainer` **白屏**。复用前要先 `loadUrl('about:blank')` | 强制释放已绑定组件 → 白屏 | 同上 |
+| W27 | 渲染进程**只有在所有 `Web` 组件都销毁后才终止**，故「预启动渲染进程」只在单渲染进程模式下收益显著（**移动设备默认单进程，2in1 默认多进程**）。⚠️ `setRenderProcessMode` 传入不在 `RenderProcessMode` 枚举范围的值 → **自动按多进程处理**，不是回落单进程；`terminateRenderProcess()` 会影响**共享该进程的所有实例**；共享进程时 `onRenderExited` 在**每个受影响组件上各触发一次** | 以为省了内存实际开了多进程；或关进程连带打挂别的 Web 实例 | web_component_process |
+
+另外两条不是陷阱但会影响架构选择，记在这里备查：
+
+- **元服务不能用 `Web` 组件。** 应用用 ArkWeb 的 `Web`；元服务内嵌网页要用 **ASCF Webview** 或
+  **AtomicServiceEnhancedWeb**（`web-component-overview`）。⚠️ 这两个组件待核实。
+- **要判断某个 Web 特性能不能用，查 Chromium 版本而不是鸿蒙版本。** 6.1 = M132，7.0 = M144（默认）。
+  按现网分布，实际主力内核是 **M132**。
+
+### 时序：一条官方确认的执行顺序
+
+**`javaScriptOnDocumentStart` 在 `onControllerAttached` 之后执行**（`web-app-page-data-channel` FAQ）。
+需要「页面脚本执行前注入」的逻辑要放对位置。
+
 ## 经验性规则（⚠️ 无官方依据，待核实）
 
 - ⚠️ 让模型先写数据模型（`class`/`interface`）再写 `build()`，可减少 R2 类错误 —— 无官方依据。
@@ -350,6 +401,21 @@ R1–R21 是语言与工程层面的规则，本节是**调用端侧 AI 能力�
 - ⚠️ 「适用 API Level」只标注官方明确写出的起始版本，未逐条向官方确认下限。
 - ⚠️ K1–K12 全部来自文档研读，**无一条经实机调用验证**。其中 K3（640/1280 字节、20/40 ms）、K5（TTS 实例设备级共享）、K7（并发返回系统繁忙）都是最需要实测确认的行为型结论。
 - ⏳ K12 是时效性信息（试用期免费至 2026-12-31），2027 年起须重新核实计费口径。
+- ⚠️ W1–W27 同样**无一条经实机验证**，全部来自 2026-09-02 / 2026-09-03 抓取的官方文档。
+  但与 K 系列不同：**ArkWeb 官方明确支持模拟器**（`web-component-overview`），
+  所以 W 系列是**可以被验证的**，不必等真机。这应是 CLT 到位后的优先动作，
+  已立 `experiments/002-混合容器最小基座`。
+  ⚠️ 一处口径冲突：`arkts-apis-webview` 模块描述页写「示例效果请**以真机运行为准**」，
+  与指南页的「支持模拟器」并不矛盾（一个讲准确性、一个讲可运行性），但**哪些能力在模拟器上有差异未确认**。
+- ✅ W1–W16 的起始版本已补齐（见 `docs/05` 的「起始版本」一节）：模块首批接口 **API 9**，
+  API 参考页标题无上角标即 9。仍未查的是 `Web` **组件**属性/事件（`onInterceptRequest`、
+  `javaScriptProxy`、`fileAccess` 等）的起始版本——那些在组件描述页，不在 webview 模块页。
+- ⚠️ **W17–W27 涉及的接口起始版本全未查**：`renderMode`、`enableNativeEmbedMode`、
+  `registerNativeEmbedRule`、`onNativeEmbed*` 四个回调、`sharedRenderProcessToken` 在组件描述页；
+  `setRenderProcessMode` / `terminateRenderProcess` / `onActive` / `onInactive` 在 webview 模块页但本轮未查。
+  按 `CLAUDE.md`「凭印象写版本号 = 事故」，这些暂不标版本。
+- ⚠️ W20/W21 的像素阈值（7,680 / 500,000 / 8,000）**是官方给的物理像素数字，未实测**。
+  W24 的「每个 Web 组件约 200MB」同理，官方原文是「大约」。
 
 ## 来源
 
@@ -387,6 +453,9 @@ R1–R21 是语言与工程层面的规则，本节是**调用端侧 AI 能力�
 
 K1–K12 的逐条依据不在上表：它们来自各 Kit 的细节笔记，完整来源表见
 [core-speech-kit.md](ai-kit/core-speech-kit.md)、[core-vision-kit.md](ai-kit/core-vision-kit.md)、[scenario-kits.md](ai-kit/scenario-kits.md)。
+
+W1–W27 的依据同样不在上表，访问日期 **2026-09-02**（W1–W16）与 **2026-09-03**（W17–W27），
+来源表见 [05-arkweb-hybrid-container.md](05-arkweb-hybrid-container.md)。
 
 
 

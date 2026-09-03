@@ -1,6 +1,6 @@
 # 资料索引
 
-最后更新：2026-09-01
+最后更新：2026-09-03
 
 写入 `docs/` 的每个事实都应能在这里找到出处。新增条目时补上访问日期——鸿蒙官方文档会随版本改写，URL 不变但内容会变。
 
@@ -76,6 +76,40 @@ URL 拼法：`https://developer.huawei.com/consumer/cn/doc/<catalog>/<slug>`，`
 | API 参考总入口 | `development-intro-api` | references |
 
 规则清单里每条规则的具体依据 slug 见 `docs/03-arkts-codegen-rules.md` 的规则表与文末来源表。
+
+### ArkWeb 与混合容器 → `docs/05-arkweb-hybrid-container.md`（访问日期 2026-09-02 / 2026-09-03，可信度 A）
+
+**本项目当前主线方向。** 目录树根节点 `[arkweb]`，全部在 `harmonyos-guides` 下。
+
+| 主题 | slug | 官方更新时间 |
+| --- | --- | --- |
+| ArkWeb 简介（Chromium 内核版本表、权限、模拟器支持） | `web-component-overview` | 2026-06-12 |
+| 应用侧调前端函数 | `web-in-app-frontend-page-function-invoking` | 2026-08-29 |
+| 前端调应用侧函数 | `web-in-page-app-function-invoking` | 2026-08-29 |
+| 应用侧与前端数据通道 | `web-app-page-data-channel` | 2026-03-09 |
+| 本地资源跨域 | `web-cross-origin` | 2026-08-29 |
+| 拦截网络请求（SchemeHandler） | `web-scheme-handler` | 2026-08-29 |
+| 自定义页面请求响应（`onInterceptRequest`） | `web-resource-interception-request-mgmt` | 2026-08-29 |
+| Web 组件渲染模式（异步/同步、高度上限） | `web-render-mode` | 2026-08-29 |
+| 同层渲染（规格约束、同层标签、四个回调） | `web-same-layer` | 2026-08-29 |
+| 同层渲染原生组件（Trace 性能对比 5ms→1ms） | `same-layer-rendering-native-component` | 2026-08-18 |
+| 使用离线 Web 组件（离屏预创建、预渲染、复用释放） | `web-offline-mode` | 2026-08-29 |
+| ArkWeb 进程模型（五种进程、渲染进程共享策略） | `web_component_process` | 2026-08-29 |
+
+API 参考（catalog `harmonyos-references`，访问日期 2026-09-02）：
+
+| 主题 | slug |
+| --- | --- |
+| 模块描述（首批接口 API 9、上角标标版本的口径） | `arkts-apis-webview` |
+| `WebviewController` 全部方法与起始版本（14000+ 行） | `arkts-apis-webview-webviewcontroller` |
+| `WebMessagePort`（基础协议 / Ext 协议、错误码） | `arkts-apis-webview-webmessageport` |
+| 入口页（下挂约 40 个类/接口页，多数未读） | `js-apis-webview` |
+
+完整文档地图（约 60 个 slug）见 `docs/05-arkweb-hybrid-container.md` 的「官方文档地图」一节。
+✅ `@ohos.web.webview` 模块方法的起始版本已补齐（2026-09-02）。
+⚠️ 仍缺 `Web` **组件**属性/事件（`renderMode`、`enableNativeEmbedMode`、`registerNativeEmbedRule`、
+`onNativeEmbed*`、`onInterceptRequest`、`javaScriptProxy`、`fileAccess`、`sharedRenderProcessToken`）
+的起始版本——这些在**组件描述**页，不在 webview 模块页，未查。
 
 ## 非官方来源（B / C 类）
 
