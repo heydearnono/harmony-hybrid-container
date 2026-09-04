@@ -1,8 +1,29 @@
 # harmony/ — 工程位
 
-最后更新：2026-09-03 ｜ **`HybridShell/` 已真编译通过，产出 HAP。**
-走的是免登录的 OpenHarmony API 23 链（`BUILD SUCCESSFUL in 3 s 109 ms`）。
+最后更新：2026-09-04 ｜ **`HybridShell/` 已真编译通过，产出 HAP。**
+走的是免登录的 OpenHarmony API 23 链（`BUILD SUCCESSFUL in 3 s 399 ms`）。
 **产物是 OpenHarmony HAP，装不进 HarmonyOS NEXT 真机**；要 HarmonyOS HAP 仍需人登录下载 Command Line Tools。
+
+## 先做这一步：确认平台配置对得上你的 SDK
+
+工程有两套互斥的平台配置，**仓库里提交的是 HarmonyOS 侧**（= `devecocli create` 的原值），
+用 DevEco Studio 打开可以直接编译。本机这条免登录链只有 OpenHarmony SDK，编译前要先切过去：
+
+```sh
+bash harmony/switch-runtime.sh          # 只看当前是哪一侧
+bash harmony/switch-runtime.sh ohos     # 切到 OpenHarmony（本机编译走这个）
+bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认，提交前切回来）
+```
+
+配错了会撞上这两条错误，**都不是代码问题，是 SDK 家族对不上**：
+
+| 现象 | 谁在报 | 原因 |
+| --- | --- | --- |
+| `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]` | HarmonyOS 侧 hvigor / DevEco Studio | 工程写着 `runtimeOS: "OpenHarmony"`，但机器上只有 HarmonyOS SDK → 切 `hos` |
+| `00303168 Configuration Error / SDK component missing.` | 本机 OpenHarmony 链（2026-09-04 实测） | 工程写着 `runtimeOS: "HarmonyOS"`，但机器上只有 OpenHarmony SDK → 切 `ohos` |
+
+两条错误互为镜像，正好说明两套 SDK 不能互相顶替（依据见本文「另一条路 → 边界」）。
+脚本只重写两个文件里 `>>> PLATFORM BLOCK >>>` 标记之间的内容，注释与其余配置不动。
 
 ## 现在是什么状态
 
@@ -117,8 +138,7 @@ CLT 的下载页需要**华为开发者账号登录**（第三方 CLI `hdx` 也�
 判据：`ls ~/.local/hmos-toolchain/command-line-tools/version.txt` 能看到文件即算就位——
 DevEco CLI 正是读这个文件来认 CLT（见 `experiments/001` 步 2 对 `dist/cli.js` 的核对）。
 
-之后把 `build-profile.json5` 的 `runtimeOS` 与三个版本号、`module.json5` 的 `deviceTypes`
-按各自注释里留的原值改回 HarmonyOS 侧写法，再 `devecocli build`。
+之后 `bash harmony/switch-runtime.sh hos`（仓库默认已是这一侧），再 `devecocli build`。
 桩也可以删了：`rm -rf ~/.local/hmos-toolchain/clt-stub`。
 
 ## 一个必须知道的坑
@@ -151,8 +171,10 @@ entry/src/main/ets/pages/Index.ets               # 改写为混合容器
 entry/src/main/module.json5                      # 加 ohos.permission.INTERNET
 ```
 
-⚠️ **`hvigor/hvigor-config.json5` 与 `oh-package.json5` 的 `modelVersion` 实测是 `6.1.0`**，
-本文此前写的 `6.0.2` 有误（那是更早一次离线读模板时的记录），已改。
+⚠️ **`modelVersion` 要分清「模板里写的」和「生成出来的」**：CLI 包内
+`templates/application/hvigor/hvigor-config.json5` 磁盘上就是 `6.0.2`，
+但 `create` 落盘时替换成了 **`6.1.0`**（工程里现在是 6.1.0）。
+本文此前只写「模板实测是 6.1.0」不够准确，已改。
 
 `create` 参数：`--app-name`（必填，`^[a-zA-Z][a-zA-Z0-9_]*$`）、`--project-path`（默认 `./<app-name>`，
 已存在则必须为空）、`--bundle-name`（默认 `com.example.<小写名>`）、`--api-level`（整数 17–23，见上）。
@@ -195,6 +217,7 @@ entry/src/main/module.json5                      # 加 ohos.permission.INTERNET
 source harmony/env.sh
 export DEVECO_CLI_CLT_PATH="$HOME/.local/hmos-toolchain/clt-oh"
 export OHOS_BASE_SDK_HOME="$HOME/.local/hmos-toolchain/clt-oh/sdk"
+bash harmony/switch-runtime.sh ohos          # 仓库默认是 HarmonyOS 侧，先切过来
 cd harmony/HybridShell && devecocli build
 ```
 
@@ -204,12 +227,16 @@ cd harmony/HybridShell && devecocli build
 
 ### 工程侧要改两处，都是平台差异不是代码缺陷
 
+**这两处现在由 `harmony/switch-runtime.sh` 代劳**（见文首），下表是它改了什么、为什么改：
+
 | 文件 | 改动 | 为什么 |
 | --- | --- | --- |
 | `build-profile.json5` | `runtimeOS` → `"OpenHarmony"`；`compileSdkVersion`（**新增，必填**）/`compatibleSdkVersion`/`targetSdkVersion` → 整数 `23` | hvigor 报 `00303034 For the OpenHarmony project, Please configure compileSdkVersion`；schema 的 type 是 `["integer","string"]`，OpenHarmony 用整数 |
 | `entry/src/main/module.json5` | `deviceTypes` `["phone"]` → `["default"]` | OpenHarmony 的 `sdk/23/ets/api/device-define/` 只有 `2in1/default/liteWearable/tablet/tv/wearable`，无 `phone`，否则 `00303060 系统能力集交集为空` |
 
-两处都在文件注释里留了改回 HarmonyOS 的原值。
+⚠️ **仓库提交的是 HarmonyOS 侧的值**，也就是说*入库那一份配置本身没有被编译器验过*
+（本机没有 HarmonyOS SDK）。跑通编译的是 `ohos` 那一侧，`switch-runtime.sh ohos` 后可复现。
+这是为了让别人下载后能用 DevEco Studio 直接打开而做的取舍。
 
 ### 边界
 

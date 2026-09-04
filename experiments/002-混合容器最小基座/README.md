@@ -87,7 +87,8 @@ API 版本按现网主力取，对应内核 M132（见 `docs/05` 内核版本表
   读 `dist/cli.js` 的 `RI()`：下限硬编码 17，上限取 `getMaxApiLevel()`，取不到回落硬编码 23。
   `create` 生成的原值是 `"6.1.0(23)"`；下午为走 OpenHarmony 链又改成整数 `23`（三个字段 + 新增
   `compileSdkVersion`，原值留在文件注释里）。而现网主力是 6.1.1(24) —— 真 CLT 到位后要重判。
-- 模板的 `modelVersion` 实测是 **`6.1.0`**，`harmony/README.md` 此前记的 `6.0.2` 有误，已改。
+- 模板的 `modelVersion`：CLI 包内模板文件磁盘上是 **`6.0.2`**，`create` 落盘时替换成 **`6.1.0`**
+  （工程里是 6.1.0）。`harmony/README.md` 此前两种写法都不够准确，已改。
 
 ### 步 1 是怎么从失败翻到达成的
 
@@ -172,6 +173,8 @@ COMPILE RESULT:FAIL {ERROR:2}
 
 ## 遗留
 
+- ⚠️ **仓库里提交的是 HarmonyOS 侧配置**（2026-09-04 起，为了别人 clone 后能用 DevEco Studio 打开），
+  复现本实验的编译要先 `bash harmony/switch-runtime.sh ohos`。**入库那份配置本身未被编译器验过。**
 - ⚠️ **产物是 OpenHarmony HAP**，预期装不进 HarmonyOS NEXT 真机（未实测，无设备）。
   要 HarmonyOS HAP 仍需人登录下载 Command Line Tools，见 `harmony/README.md`。
 - ⚠️ 步 3–8 全部未开始：本机无 OpenHarmony 设备/模拟器。`hdc` 在 `sdk/23/toolchains/hdc`（存在），

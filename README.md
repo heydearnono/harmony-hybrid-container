@@ -51,20 +51,35 @@ python3 tools/hwdoc.py doc core-speech-introduction # 正文
 
 细则见 [CLAUDE.md](CLAUDE.md)。
 
-## 工程现状（2026-09-03）
+## 工程现状（2026-09-04）
 
 `harmony/HybridShell/` —— **已真编译通过，产出 HAP。**
+
+### 拿到代码后第一件事：对齐平台配置
+
+工程有两套互斥配置。**仓库提交的是 HarmonyOS 侧**（`devecocli create` 的原值），
+DevEco Studio 打开即可用；只有 OpenHarmony SDK 的环境要先切过去：
+
+```sh
+bash harmony/switch-runtime.sh ohos     # 切 OpenHarmony（免登录编译链走这个）
+bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认）
+```
+
+配错了报的是 `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]`（HarmonyOS 侧）
+或 `00303168 SDK component missing`（OpenHarmony 侧），两者互为镜像，**都不是代码问题**。
+见 [harmony/README.md](harmony/README.md) 与 [2026-09-04 日志](research-log/2026-09-04-协作者环境两条错误.md)。
 
 | 环节 | 状态 |
 | --- | --- |
 | `devecocli create` 生成官方模板工程（30 文件） | ✅ 已跑通 |
 | 混合容器代码（三条通信路径 + 本地 H5，`Index.ets` 281 行） | ✅ 已写入 |
-| `devecocli build` 出 HAP | ✅ **已通过**，`BUILD SUCCESSFUL in 3 s 109 ms`，110,930 B 未签名 HAP |
+| `devecocli build` 出 HAP | ✅ **已通过**，`BUILD SUCCESSFUL in 3 s 399 ms`，110,930 B 未签名 HAP |
 | ArkTS 类型检查 | ✅ 已过，并用反向实验确认编译器真在查类型 |
 | 在 HarmonyOS SDK 上编译 | ❌ 未做，需人登录下载 CLT |
 | 装设备、跑通 W1–W16 | ❌ 未开始，本机无 OpenHarmony 设备 |
 
-⚠️ **关键限定：走的是免登录的 OpenHarmony API 23 链，产物是 OpenHarmony HAP，不是 HarmonyOS HAP。**
+⚠️ **关键限定：跑通编译的是免登录的 OpenHarmony API 23 链（`switch-runtime.sh ohos` 那一侧），
+产物是 OpenHarmony HAP，不是 HarmonyOS HAP；入库的 HarmonyOS 侧配置本身未被编译器验过。**
 所以准确说法是「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」。
 
 两条关键发现：**`create` 不需要 SDK，`build` 需要**；**登录门禁只挡 HarmonyOS SDK 本体，

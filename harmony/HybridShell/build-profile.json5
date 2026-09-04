@@ -5,21 +5,17 @@
       {
         "name": "default",
         "signingConfig": "default",
-        // ⚠️ 2026-09-03：为了在不登录华为账号的前提下真编译一次，runtimeOS 从 "HarmonyOS"
-        //    改成了 "OpenHarmony"。产物是 OpenHarmony HAP，装不进 HarmonyOS NEXT 真机。
-        //    依据与代价见 harmony/README.md 的「另一条路」。
+        // ⚠️ 下面这段由 harmony/switch-runtime.sh 整体重写，请不要手改。
+        //    切平台：bash harmony/switch-runtime.sh hos | ohos
         //
-        //    改回 HarmonyOS 时用这三行（devecocli create 生成的原值）：
-        //      "targetSdkVersion": "6.1.0(23)",
-        //      "compatibleSdkVersion": "6.1.0(23)",
-        //      "runtimeOS": "HarmonyOS",
-        //
-        //    OpenHarmony 侧要求整数版本号，且 compileSdkVersion 必填
-        //    （hvigor 报 00303034: For the OpenHarmony project, Please configure compileSdkVersion）。
-        "compileSdkVersion": 23,
-        "compatibleSdkVersion": 23,
-        "targetSdkVersion": 23,
-        "runtimeOS": "OpenHarmony",
+        //    仓库默认值是 HarmonyOS（= devecocli create 的原值），
+        //    这样别人用 DevEco Studio 下载后能直接打开；本机免登录编译前先切到 ohos。
+        //    两侧差异与依据见 harmony/README.md 的「另一条路」。
+        // >>> PLATFORM BLOCK >>>
+        "targetSdkVersion": "6.1.0(23)",
+        "compatibleSdkVersion": "6.1.0(23)",
+        "runtimeOS": "HarmonyOS",
+        // <<< PLATFORM BLOCK <<<
         "buildOption": {
           "strictMode": {
             "caseSensitiveCheck": true,

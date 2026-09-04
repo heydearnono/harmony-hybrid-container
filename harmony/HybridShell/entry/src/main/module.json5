@@ -4,14 +4,16 @@
     "type": "entry",
     "description": "$string:module_desc",
     "mainElement": "EntryAbility",
-    // ⚠️ 2026-09-03：模板原值是 "phone"（HarmonyOS 侧的设备类型）。
+    // ⚠️ 下面这段由 harmony/switch-runtime.sh 整体重写，请不要手改。
+    //    HarmonyOS 侧是 "phone"（模板原值）；OpenHarmony 侧必须是 "default" ——
     //    OpenHarmony SDK 的 sdk/23/ets/api/device-define/ 里只有
     //    2in1 / default / liteWearable / tablet / tv / wearable，没有 phone，
-    //    hvigor 会在 SyscapTransform 阶段报 00303060「系统能力集交集为空」。
-    //    改回 runtimeOS: "HarmonyOS" 时，这里也要改回 "phone"。
+    //    否则 hvigor 在 SyscapTransform 阶段报 00303060「系统能力集交集为空」。
+    // >>> PLATFORM BLOCK >>>
     "deviceTypes": [
-      "default"
+      "phone"
     ],
+    // <<< PLATFORM BLOCK <<<
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
