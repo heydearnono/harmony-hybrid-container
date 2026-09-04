@@ -21,6 +21,8 @@ bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认，提�
 | --- | --- | --- |
 | `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]` | HarmonyOS 侧 hvigor / DevEco Studio | 工程写着 `runtimeOS: "OpenHarmony"`，但机器上只有 HarmonyOS SDK → 切 `hos` |
 | `00303168 Configuration Error / SDK component missing.` | 本机 OpenHarmony 链（2026-09-04 实测） | 工程写着 `runtimeOS: "HarmonyOS"`，但机器上只有 OpenHarmony SDK → 切 `ohos` |
+| `00303028 Unsupported modelVersion of Hvigor 6.1.0` | 对方 DevEco Studio 自带的 hvigor | Studio 比生成工程的 CLI 老，只认 modelVersion `6.0.1`；工程两处写 `6.1.0`（`hvigor/hvigor-config.json5`、`oh-package.json5`）→ 升 Studio 为主 |
+| `00401004` 设备缺一批 `SystemCapability.*` | 安装期（设备/模拟器） | 要求的 syscap 全集来自 `deviceTypes`，与代码 import 无关；见 `docs/03` 的 **R22** 与 `entry/src/main/syscap.json` |
 
 两条错误互为镜像，正好说明两套 SDK 不能互相顶替（依据见本文「另一条路 → 边界」）。
 脚本只重写两个文件里 `>>> PLATFORM BLOCK >>>` 标记之间的内容，注释与其余配置不动。
@@ -169,6 +171,7 @@ entry/src/main/resources/rawfile/index.html      # H5 侧，三条通信路径�
 entry/src/main/resources/rawfile/js/probe.js     # W6 探针，预期加载失败
 entry/src/main/ets/pages/Index.ets               # 改写为混合容器
 entry/src/main/module.json5                      # 加 ohos.permission.INTERNET
+entry/src/main/syscap.json                       # 收窄 rpcid 要求的 syscap，见 docs/03 的 R22
 ```
 
 ⚠️ **`modelVersion` 要分清「模板里写的」和「生成出来的」**：CLI 包内

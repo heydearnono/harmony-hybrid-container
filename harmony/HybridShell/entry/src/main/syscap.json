@@ -1,0 +1,49 @@
+{
+  // 收窄本模块「要求设备具备的系统能力」集合。
+  //
+  // 为什么需要：hvigor 的 SyscapTransform 是按 module.json5 的 deviceTypes 整体取
+  // sdk/<api>/ets/api/device-define/<type>.json 的 SysCaps 全集来生成 rpcid，
+  // **与代码实际 import 了什么无关**。所以这个只用 ArkWeb 的壳工程也会要求 227 条能力，
+  // 其中含蜂窝通话、蓝牙、WiFi P2P、DRM、企业设备管理等它根本不用的能力。
+  // 目标设备（尤其模拟器）缺任意一条，安装期就报
+  //   00401004 请尝试匹配设备和应用的API版本 … 当前设备的 rpcid.json 文件中不包含以下系统能力属性
+  //
+  // 机制依据（读的是 hvigor 6.26.1 的实现，不是文档推测）：
+  //   hvigor/hvigor-ohos-plugin/src/tasks/abstract/abstract-syscap-transform.js
+  //   processProductionSysCap(t,e){ t.addedSysCaps→e.add;  t.removedSysCaps→e.delete }
+  // 即 production.removedSysCaps 会在写 rpcid 之前从集合里删掉。
+  //
+  // ⚠️ 同一文件里 doTaskAction 开头是 `if (this.targetData.isHarmonyOS()) return;`
+  //    —— 这条 OpenHarmony 链在 HarmonyOS 目标下根本不跑这个 task。
+  //    所以本文件对 **HarmonyOS 侧（DevEco Studio）是否生效，未核实**。
+  //    OpenHarmony 侧已实测：rpcid.json 从 227 条降到 212 条，下列 15 条被删掉。
+  "devices": {
+    "general": [
+      "default"
+    ]
+  },
+  "production": {
+    "removedSysCaps": [
+      // 蜂窝/通话/短信：Web 壳完全不用
+      "SystemCapability.Telephony.CoreService",
+      "SystemCapability.Telephony.CellularData",
+      "SystemCapability.Telephony.CallManager",
+      "SystemCapability.Telephony.SmsMms",
+      "SystemCapability.Telephony.StateRegistry",
+      // 近场/分布式硬件
+      "SystemCapability.Communication.Bluetooth.Core",
+      "SystemCapability.Communication.WiFi.P2P",
+      "SystemCapability.Communication.FusionConnectivity.Core",
+      "SystemCapability.DistributedHardware.DeviceManager",
+      // 分布式数据
+      "SystemCapability.DistributedDataManager.KVStore.Core",
+      "SystemCapability.DistributedDataManager.DataObject.DistributedObject",
+      // 媒体转码与 DRM
+      "SystemCapability.Multimedia.Media.AVTranscoder",
+      "SystemCapability.Multimedia.Drm.Core",
+      // 应用域名校验、企业设备管理
+      "SystemCapability.BundleManager.AppDomainVerify",
+      "SystemCapability.Customization.EnterpriseDeviceManager"
+    ]
+  }
+}

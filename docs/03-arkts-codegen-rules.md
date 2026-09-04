@@ -1,13 +1,13 @@
 # ArkTS 代码生成规则（给 AI 用的避坑清单）
 
-最后更新：2026-09-03 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段的验证状态：**W1 已由 ArkTS 编译器实测确认**；其余落进 `harmony/HybridShell/` 的片段为「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」；未落进工程的片段仍是**未编译验证**
+最后更新：2026-09-04 ｜ 事实来源：华为官方文档（见文末来源表）｜ 代码片段的验证状态：**W1 已由 ArkTS 编译器实测确认**；其余落进 `harmony/HybridShell/` 的片段为「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」；未落进工程的片段仍是**未编译验证**
 
 ## 怎么用这份清单
 
 - 面向「让大模型写 ArkTS 少犯错」。每条规则给 ❌/✅ 最小示例与官方依据 slug。
 - 官方 URL 拼法：`https://developer.huawei.com/consumer/cn/doc/<catalogName>/<slug>`，catalogName 见来源表。
 - `arkts-no-*` 规则 ID 与五位错误码来自官方《从TypeScript到ArkTS的适配规则》，可直接写进 prompt 或 review 意见。该文档只有两级：**错误**（不遵从则编译失败）与**警告**（当前不影响编译，未来可能失败）。R1–R7 全部出自该文档。
-- R8 起是 ArkUI / 工程配置层，官方无统一编号，依据为对应页面的「限制条件」「实现规则」小节。
+- R8–R22 是 ArkUI / 工程配置层，官方无统一编号，依据为对应页面的「限制条件」「实现规则」小节。
 - **K1–K12** 是调用端侧 AI Kit 时特有的坑，与语言规则分开列在「端侧 AI Kit 调用陷阱」一节。这些多数不会编译报错，而是运行时静默失效。
 - **W1–W27** 是 ArkWeb / 混合容器（原生 + H5）的坑，列在「ArkWeb 混合容器陷阱」一节。混合容器是本项目当前主线，见 `docs/05-arkweb-hybrid-container.md`。
 - 未标注 API Level 的按全版本适用理解（未逐条向官方确认下限，见「未确认」节）。
@@ -37,6 +37,7 @@
 | R19 | 权限＝`module.json5` 声明 + 运行时 `requestPermissionsFromUser` | 授权失败 / 上架驳回 | declare-permissions、request-user-authorization |
 | R20 | 模块级 `oh-package.json5` 的 `name`/`version` 必选 | 构建失败 | ide-oh-package-json5 |
 | R21 | 资源用 `$r('app.type.name')` / `$rawfile('path')`，系统资源用 `sys.` | 取不到资源 | resource-categories-and-access |
+| R22 | `deviceTypes` 决定 rpcid 要求的 syscap **全集**（与 import 无关）；设备缺一条就装不上 | 安装失败 00401004 | 实测（hvigor 6.26.1 源码 + rpcid.json） |
 
 ## 详细规则
 
@@ -282,9 +283,46 @@ Image($rawfile('/images/logo.png'))       // ❌ 不能以 / 开头
 ```
 `app.` 支持 `color`/`float`/`string`/`plural`/`media`/`profile`；`sys.` 支持 `color`/`float`/`string`/`media`/`symbol`。跨 HSP 用 `$r('[hsp].type.name')` / `$rawfile('[hsp].dir/file.png')`（**编译期不校验**）。资源 ID 重新编译后会变，不要缓存；`rawfile`/`resfile` 不参与限定词匹配。依据：`resource-categories-and-access`。
 
+### R22 `deviceTypes` 决定要求设备具备的 syscap 全集，跟代码 import 无关
+
+编译期不会报，**装到设备上才炸**：
+
+```
+错误码: 00401004
+当前设备的rpcid.json文件中不包含以下系统能力属性：SystemCapability.Telephony.CallManager,
+SystemCapability.Communication.Bluetooth.Core, SystemCapability.Multimedia.Drm.Core, ...
+```
+
+机制（读的是 hvigor 6.26.1 实现，非文档推测）：`SyscapTransform` 按 `module.json5` 的 `deviceTypes`
+去取 `sdk/<api>/ets/api/device-define/<type>.json` 的 `SysCaps` **全集**求交，写成 `rpcid`。
+**只要声明了 `deviceTypes: ["phone"]`（或 `["default"]`），哪怕代码里只用了 `Web` 组件，
+也会要求蜂窝通话、蓝牙、WiFi P2P、DRM、企业设备管理等两百多条能力。**
+
+实测（本项目 `HybridShell`，只用 ArkWeb）：`entry/build/.../intermediates/syscap/default/rpcid.json`
+里有 **227** 条，包含 `Telephony.CallManager`、`Bluetooth.Core` 等本工程根本用不到的能力。
+设备（尤其模拟器）缺任意一条，安装即被拒。
+
+收窄办法是在模块源码根放 `entry/src/main/syscap.json`：
+
+```json
+{
+  "devices": { "general": ["default"] },
+  "production": {
+    "removedSysCaps": ["SystemCapability.Telephony.CallManager", "SystemCapability.Multimedia.Drm.Core"]
+  }
+}
+```
+
+`production.addedSysCaps` 逐条 `add`、`removedSysCaps` 逐条 `delete`，发生在写 rpcid 之前
+（`abstract-syscap-transform.js` 的 `processProductionSysCap`）。本项目实测：227 → **212**，
+被删的 15 条正是协作者设备缺的那 15 条，`SystemCapability.Web.Webview.Core` 保留，编译仍 `BUILD SUCCESSFUL`。
+
+⚠️ 同一函数开头是 `if (this.targetData.isHarmonyOS()) return;` —— 这条 OpenHarmony 链在
+HarmonyOS 目标下不跑该 task，所以 **`syscap.json` 在 HarmonyOS 侧（DevEco Studio）是否生效未核实**。
+
 ## 端侧 AI Kit 调用陷阱（K1–K12）
 
-R1–R21 是语言与工程层面的规则，本节是**调用端侧 AI 能力时特有的坑**，来自本轮 10 个 Kit 的逐页研读。
+R1–R22 是语言与工程层面的规则，本节是**调用端侧 AI 能力时特有的坑**，来自本轮 10 个 Kit 的逐页研读。
 与上面不同，这些错误多数**不会编译失败**，而是运行时静默失效或行为与直觉相反——对 AI 生成代码尤其危险。
 
 逐条事实的官方 slug、文档 version 与访问日期见对应的 `docs/ai-kit/*.md` 文末来源表。
