@@ -67,7 +67,11 @@ bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认）
 
 配错了报的是 `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]`（HarmonyOS 侧）
 或 `00303168 SDK component missing`（OpenHarmony 侧），两者互为镜像，**都不是代码问题**。
-见 [harmony/README.md](harmony/README.md) 与 [2026-09-04 日志](research-log/2026-09-04-协作者环境两条错误.md)。
+
+📌 **别人用这个基座踩过的坑（编译、装机、版本对不上）全部整理在
+[harmony/HybridShell/README.md](harmony/HybridShell/README.md)** —— 15 条错误速查表 + 逐条详解，
+拿到代码先读它。工具链细节见 [harmony/README.md](harmony/README.md)，
+过程见 [2026-09-04 日志](research-log/2026-09-04-协作者环境两条错误.md)。
 
 | 环节 | 状态 |
 | --- | --- |

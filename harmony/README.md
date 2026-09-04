@@ -25,6 +25,7 @@ bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认，提�
 | `00401004` 设备缺一批 `SystemCapability.*` | 安装期（设备/模拟器） | 要求的 syscap 全集来自 `deviceTypes`，与代码 import 无关；见 `docs/03` 的 **R22** 与 `entry/src/main/syscap.json` |
 
 两条错误互为镜像，正好说明两套 SDK 不能互相顶替（依据见本文「另一条路 → 边界」）。
+**面向使用者的完整坑点清单在 [`HybridShell/README.md`](HybridShell/README.md)**，本文只记工具链本身。
 脚本只重写两个文件里 `>>> PLATFORM BLOCK >>>` 标记之间的内容，注释与其余配置不动。
 
 ## 现在是什么状态
