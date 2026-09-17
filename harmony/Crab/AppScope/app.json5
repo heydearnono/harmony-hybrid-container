@@ -1,0 +1,14 @@
+{
+  "app": {
+    // bundleName 由 pro 的取值表定，三端同一个字符串，不在本仓改。
+    "bundleName": "net.xiaoluzhu.crab",
+    "vendor": "example",
+    "versionCode": 1000000,
+    // versionName 就是 UA 里 Crab/<版本> 的那一段（pro 的 M3）。首个版本 0.1.0。
+    // versionCode 留模板原值：它不进 UA，也没有取值要求。
+    "versionName": "0.1.0",
+    "icon": "$media:layered_image",
+    // 英文名 Crab 在 base，中文名「螃蟹」在 zh_CN 限定词目录。
+    "label": "$string:app_name"
+  }
+}

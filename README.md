@@ -1,116 +1,109 @@
-# hmos — 鸿蒙混合容器，全程 AI 开发
+# hm · HarmonyOS 侧的 WebView 容器
 
-一个**真实的鸿蒙基座**，整个项目由 AI Agent 开发。主题是**混合容器**：原生外壳 + H5 内容。
+**这是三端 WebView 容器的鸿蒙那一份。** 规划在上游仓库 `pro`（`Prospect`），本仓只出代码。
+应用名 `Crab`／中文「螃蟹」，标识 `net.xiaoluzhu.crab`，产物 HAP，鸿蒙走 **HarmonyOS NEXT**，
+不走 OpenHarmony。
 
-- **交付物是能编译、能装、能跑的工程**（`harmony/`），不是文档集
-- `docs/` 是为这件事服务的知识底座 —— 事实清单 + 踩坑记录，服务于「让 Agent 可靠地产出鸿蒙代码」
-- 当前主线：**混合容器 / ArkWeb**；端侧 AI 能力已有一轮沉淀，转为参考资料
+**按的是 pro 的 commit `e13f506`。** pro 会动（插队 spike 的答案回来、出口 2/3 议完都要改文档），
+往下一个里程碑走之前重读它的 `README.md` + `plan/` 五份 + `开工.md`，并更新这一行。
 
-## 从哪里开始读
-
-| 想知道 | 看这里 |
-| --- | --- |
-| 怎么机器可读地拿到官方文档（**先读这个**） | [docs/00-doc-retrieval.md](docs/00-doc-retrieval.md) |
-| 鸿蒙现在什么版本、工具链怎么装、工程长什么样 | [docs/01-platform-landscape.md](docs/01-platform-landscape.md) |
-| **混合容器：ArkWeb、原生↔H5 通信、本地资源加载** | [docs/05-arkweb-hybrid-container.md](docs/05-arkweb-hybrid-container.md) |
-| AI 写 ArkTS 时最容易写错什么 | [docs/03-arkts-codegen-rules.md](docs/03-arkts-codegen-rules.md) |
-| 华为官方自己的 AI 编码工具（DevEco Code / CLI） | [docs/04-official-ai-coding-tools.md](docs/04-official-ai-coding-tools.md) |
-| 工程在哪、还缺什么、人要做哪一步 | [harmony/README.md](harmony/README.md) |
-| 端侧有哪些 AI 能力可用（参考资料） | [docs/02-ondevice-ai-map.md](docs/02-ondevice-ai-map.md) · [docs/ai-kit/](docs/ai-kit/) |
-| 术语对不上 | [docs/glossary.md](docs/glossary.md) |
-| 这些结论是怎么来的 | [research-log/](research-log/) · [docs/sources.md](docs/sources.md) |
+判据不在本仓。要做什么、怎么算过、有什么还没核实，只在 pro 那七份文件里；取值只在 pro 的取值表。
+本仓写的是**怎么在鸿蒙上做到**，以及**鸿蒙侧特有的坑**。
 
 ## 目录
 
-```
-docs/            结论型知识（现在相信什么）
-  ai-kit/        逐个端侧 AI 能力的细节（第一轮产出，参考资料）
-  sources.md     资料索引：URL + 访问日期 + 可信度
-research-log/    过程记录，只追加
-experiments/     动手验证，一实验一目录
-tools/           调研工具。hwdoc.py：抓官方文档目录与正文
-harmony/         真实工程所在地。env.sh 是项目本地工具链环境变量
-CLAUDE.md        项目约定与事实纪律，Agent 与人共同遵守
-```
+| 路径 | 是什么 |
+| --- | --- |
+| `harmony/Crab/` | 真实工程。`devecocli create` 从官方模板生成，**不手搓** |
+| `harmony/env.sh` | 工具链环境变量，`source` 后生效 |
+| `harmony/switch-runtime.sh` | 两套 SDK 家族的工程配置切换 |
+| [`TASKS.md`](TASKS.md) | M1–M5 的「怎么算过」逐条翻译成鸿蒙侧任务（pro 要求的第一件产出），落本仓、pro 不收 |
+| [`TOOLCHAIN.md`](TOOLCHAIN.md) | 鸿蒙侧工程事实：工具链现状、两套 SDK 互斥、错误码速查 |
+| [`ARKTS-RULES.md`](ARKTS-RULES.md) | AI 写 ArkTS 容易写错的点（R1–R22），逐条带出处 |
+| `scripts/probe.sh` | 探针页验收命令，三仓同名，输出形状由 pro 定。**现在只有骨架** |
+| `tools/hwdoc.py` | 抓官方文档用（官方站是 Angular SPA，只能走接口） |
 
-## 查官方文档就用这个
+平台事实不在本仓——平台声明与平台层面的技术约束归 pro 对应里程碑的「平台事实」块。
 
-```bash
-python3 tools/hwdoc.py tree harmonyos-guides AI     # 目录树，方括号里是文档 slug
-python3 tools/hwdoc.py doc core-speech-introduction # 正文
-```
+## 进度
 
-文档中心是 SPA，`curl`/WebFetch 只能拿到空壳，搜索引擎也读不到正文。原理与坑见 [docs/00-doc-retrieval.md](docs/00-doc-retrieval.md)。
+| 里程碑 | 状态 |
+| --- | --- |
+| [M1 装到模拟器](TASKS.md#m1--装到模拟器) | 🟡 **已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行**；「装进模拟器、屏幕上有一个原生页面」阻塞（见下） |
+| M2 本地承载 | ⬜ 未开工。`scripts/probe.sh` 只有骨架 |
+| M3 配置注入与 UA | ⬜ 未开工 |
+| M4 导航与降级 | ⬜ 未开工 |
+| M5 三端汇合 | ⬜ 未开工 |
 
-## 两条硬规矩
+**M1 一过要插队两条 spike**：① 模拟器上 ArkWeb 跑不跑得起来，顺带 `resource://` 的 origin 与子资源；
+② `data:` iframe 加不加载得起来。答案先回 pro 改文档再往 M2 走。两条都被同一个阻塞挡着。
 
-1. **每个事实都要有来源和日期**，查不到就标 `⚠️ 待核实`，不要用通顺的句子掩盖不确定。
-2. 代码片段默认标注**未编译验证**。`harmony/HybridShell/` 里的代码已过 `devecocli build`
-   （OpenHarmony API 23），标注改写为「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」——
-   **编译通过不等于运行验证**，运行期语义的规则仍只有文档依据。
-
-细则见 [CLAUDE.md](CLAUDE.md)。
-
-## 工程现状（2026-09-04）
-
-`harmony/HybridShell/` —— **已真编译通过，产出 HAP。**
-
-### 拿到代码后第一件事：对齐平台配置
-
-工程有两套互斥配置。**仓库提交的是 HarmonyOS 侧**（`devecocli create` 的原值），
-DevEco Studio 打开即可用；只有 OpenHarmony SDK 的环境要先切过去：
+## 怎么编译
 
 ```sh
-bash harmony/switch-runtime.sh ohos     # 切 OpenHarmony（免登录编译链走这个）
-bash harmony/switch-runtime.sh hos      # 切回 HarmonyOS（仓库默认）
+bash harmony/switch-runtime.sh ohos      # 切到 OpenHarmony 侧（仓库默认是 HarmonyOS 侧）
+source harmony/env.sh ohos               # JAVA_HOME / DEVECO_CLI_CLT_PATH / OHOS_BASE_SDK_HOME
+cd harmony/Crab && devecocli build
+bash harmony/switch-runtime.sh hos       # 提交前切回来
 ```
 
-配错了报的是 `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]`（HarmonyOS 侧）
-或 `00303168 SDK component missing`（OpenHarmony 侧），两者互为镜像，**都不是代码问题**。
+两套 SDK 家族互斥，配错了报的错和代码无关。编不过先看
+[`TOOLCHAIN.md`](TOOLCHAIN.md#三分钟检查清单) 的三分钟检查清单，工具链本身的状态在
+[`TOOLCHAIN.md`](TOOLCHAIN.md#现在有什么)。
 
-📌 **别人用这个基座踩过的坑（编译、装机、版本对不上）全部整理在
-[harmony/HybridShell/README.md](harmony/HybridShell/README.md)** —— 15 条错误速查表 + 逐条详解，
-拿到代码先读它。工具链细节见 [harmony/README.md](harmony/README.md)，
-过程见 [2026-09-04 日志](research-log/2026-09-04-协作者环境两条错误.md)。
+## 阻塞在哪
 
-| 环节 | 状态 |
-| --- | --- |
-| `devecocli create` 生成官方模板工程（30 文件） | ✅ 已跑通 |
-| 混合容器代码（三条通信路径 + 本地 H5，`Index.ets` 281 行） | ✅ 已写入 |
-| `devecocli build` 出 HAP | ✅ **已通过**，`BUILD SUCCESSFUL in 3 s 399 ms`，110,930 B 未签名 HAP |
-| ArkTS 类型检查 | ✅ 已过，并用反向实验确认编译器真在查类型 |
-| 在 HarmonyOS SDK 上编译 | ❌ 未做，需人登录下载 CLT |
-| 装设备、跑通 W1–W16 | ❌ 未开始，本机无 OpenHarmony 设备 |
+**没有 HarmonyOS SDK，也没有模拟器镜像。** 本机唯一能编译的是免登录的 OpenHarmony API 23 链，
+它出的是 OpenHarmony HAP，装不进 HarmonyOS NEXT。后果有两层：
 
-⚠️ **关键限定：跑通编译的是免登录的 OpenHarmony API 23 链（`switch-runtime.sh ohos` 那一侧），
-产物是 OpenHarmony HAP，不是 HarmonyOS HAP；入库的 HarmonyOS 侧配置本身未被编译器验过。**
-所以准确说法是「已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行」。
+- M1 的「装进模拟器、屏幕上有一个原生页面」观察不了，**M1 不能宣布过**
+- M2 到 M4 每一条判据都靠模拟器观察，一条都跑不了；`scripts/probe.sh` 因此只能是骨架
 
-两条关键发现：**`create` 不需要 SDK，`build` 需要**；**登录门禁只挡 HarmonyOS SDK 本体，
-hvigor / ohpm / OpenHarmony SDK 全是公开直链**。详见 [harmony/README.md](harmony/README.md)、
-[experiments/002](experiments/002-混合容器最小基座/README.md)。
+解法是人工的一步：登录华为开发者账号下载 Command Line Tools 与模拟器镜像，步骤在
+[`TOOLCHAIN.md`](TOOLCHAIN.md#需要人做的一步)。动态验证码那一环 Agent 代办不了。
 
-**W1 已由编译器实测确认**：把 `postMessageEvent` 故意写成 `postMessage`，编译器报
-`10505001 Property 'postMessage' does not exist on type 'WebMessagePort'`。
+⚠️ 顺带一个还没解决的口径冲突：官方指南说 ArkWeb 支持模拟器，而 `arkts-apis-webview` 的模块页写
+「示例效果请以真机运行为准」。**模拟器上跑不起来时不得自行改成真机验收**——那是范围级的事，回 pro 议
+（pro 的三条红线之一）。
 
-## 工具链现状（2026-09-03 实测）
+## 三条纪律，端侧不许自己动
 
-全部装在 `~/.local/hmos-toolchain/`，自成一体，不改 `~/.zshrc`，`rm -rf` 即卸载。
-用法：`source harmony/env.sh`。
+来自 pro 的 `开工.md`，抄在这里是为了动手前能看见：
 
-| 组件 | 状态 |
-| --- | --- |
-| DevEco CLI 1.3.0-stable | ✅ `--version` / `create` / `build` 均实测通过 |
-| JDK 21（Temurin 21.0.12.1+1 LTS） | ✅ 通过，sha256 已对官方值 |
-| 官方工程模板 25 个文件 | ✅ 就在 CLI 包内 `templates/application/`，无需另下 |
-| **OpenHarmony 编译链**（hvigor 6.26.1 + ohpm + Node 22 + SDK 23 五组件） | ✅ **已就位、编译成功**；全部免登录直链，逐件对过官方 sha256 |
-| HarmonyOS Command Line Tools ≥ 26.0.0 | ❌ 仍缺，下载需华为账号 + 动态验证码，Agent 无法代办 |
-| `code-linter` | ❌ OpenHarmony CLT 包内无实体，静态检查这条线仍是空的 |
-| Node.js v24.6.0 / Python 3 / curl / jq | ✅ |
+1. **取值一律取 pro 的取值表**；承载 origin 一类在端内只定义一处，别处从它派生，不另写字面量
+2. **slug、输出形状与探针页那五条规约三端一字不差**，要改三端一起跟
+3. **做不到时只能走第 1 个出口（改本端实现）**；放宽要求、允许本端偏离这两个出口回 pro 议，不自决
 
-⚠️ 官方文档写的 `DEVECO_CLI_CLI_PATH` 实测**完全无效**，真正生效的是 `DEVECO_CLI_CLT_PATH` ——
-对照实验见 [experiments/001](experiments/001-deveco-cli-无IDE可行性/README.md)。
+## 验证强度分三档，措辞不许混用
 
-要 HarmonyOS HAP 时人要做的一步见 [harmony/README.md](harmony/README.md)。
+**未编译验证** < **已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行** < **已运行验证**
 
+- 能编译就去编译，摘标注的前提是真的过了 `devecocli build`
+- **编译通过只覆盖类型/签名层面。** 运行期语义（消息时序、`refresh()` 生效时机、运行期错误码）
+  编译器管不着，一律仍算未验证
+- **OpenHarmony SDK 是子集，过了它不等于过 HarmonyOS SDK**，不要把两者写成一回事
+- 本机没有设备/模拟器，**任何情况下都不要宣称「已验证可运行」**
 
+## 抓官方文档
+
+`developer.huawei.com` 是 Angular SPA，`curl` 拿不到正文，只能走它自己的接口：
+
+```sh
+python3 tools/hwdoc.py tree harmonyos-guides       # 导目录树
+python3 tools/hwdoc.py doc web-component-overview  # 取正文
+python3 tools/hwdoc.py meta web-component-overview # 取 version / 更新时间
+```
+
+`objectId` 就是 URL 里那段 slug（不是 `nodeId`）。URL 拼法
+`https://developer.huawei.com/consumer/cn/doc/<catalogName>/<slug>`。
+
+鸿蒙的 API 名称、Kit 归属、起始 API Level 变动频繁，**凭印象写 = 事故**：查不到就写「未确认」，
+不确定就标 `⚠️ 待核实`，写下的事实带访问日期。
+
+## 边界
+
+- 不提交签名证书、私钥、`.p12`/`.cer`/`.p7b`、AGC 账号信息（`.gitignore` 拦一层，以人工确认为准）
+- 工具链装在 `~/.local/hmos-toolchain/`，**不进本仓库、不提交、不改 `~/.zshrc`**
+- 工程结构由 `devecocli create` 生成，改动要能说清依据
+- 回退点：`pre-rebuild` tag（重建前 `main` 的 HEAD，`024bcc4`）。旧的端侧 AI 调研、JSBridge 契约、
+  同层渲染与离线组件笔记都在那里，本仓不留 `archive/`——留着就是第二个真相

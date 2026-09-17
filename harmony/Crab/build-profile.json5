@@ -1,0 +1,47 @@
+{
+  "app": {
+    "signingConfigs": [],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        // >>> PLATFORM BLOCK >>>
+        "targetSdkVersion": "6.1.0(23)",
+        "compatibleSdkVersion": "6.1.0(23)",
+        "runtimeOS": "HarmonyOS",
+        // <<< PLATFORM BLOCK <<<
+        // 上面这一块由 harmony/switch-runtime.sh 重写，不要手改。
+        // 仓库默认是 HarmonyOS 侧（= devecocli create 的原值，DevEco Studio 能直接打开）。
+        // 本机只有免登录的 OpenHarmony SDK，编译前先 `bash harmony/switch-runtime.sh ohos`。
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}

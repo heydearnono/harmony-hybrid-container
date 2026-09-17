@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Crab 容器的入口模块"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Crab"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "Crab"
+    }
+  ]
+}

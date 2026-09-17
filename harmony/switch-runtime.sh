@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
-# 在 HarmonyOS / OpenHarmony 两套平台配置之间切换 HybridShell 工程。
+# 在 HarmonyOS / OpenHarmony 两套平台配置之间切换 Crab 工程。
 #
-#   bash harmony/switch-runtime.sh hos     # HarmonyOS（仓库默认，DevEco Studio 能直接打开）
+#   bash harmony/switch-runtime.sh hos     # HarmonyOS（仓库默认，也是交付目标）
 #   bash harmony/switch-runtime.sh ohos    # OpenHarmony（本机免登录编译链用这个）
 #   bash harmony/switch-runtime.sh         # 只看当前状态，不改文件
 #
 # 为什么要这个脚本：两套 SDK 家族的工程配置不兼容，靠人手改两个文件四处值容易漏。
-#   - runtimeOS: "OpenHarmony" 时，HarmonyOS SDK 侧会报
+#   - runtimeOS: "OpenHarmony" 时，HarmonyOS SDK 侧报
 #     `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]`
-#   - deviceTypes: "phone" 在 OpenHarmony SDK 侧会报 00303060「系统能力集交集为空」
-# 依据见 harmony/README.md 的「另一条路」。
+#   - deviceTypes: "phone" 在 OpenHarmony SDK 侧报 00303060「系统能力集交集为空」
+# 依据见 TOOLCHAIN.md。
 #
 # 只重写两个文件里 `>>> PLATFORM BLOCK >>>` 与 `<<< PLATFORM BLOCK <<<` 之间的内容，
 # 注释和其余配置原样保留。
+#
+# ⚠️ 交付目标是 HarmonyOS HAP。OpenHarmony 一侧只是本机的编译体检，
+#    产物装不进 HarmonyOS NEXT，提交前请切回 hos。
 
 set -euo pipefail
 
-PROJ="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/HybridShell"
+PROJ="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/Crab"
 BUILD_PROFILE="$PROJ/build-profile.json5"
 MODULE_JSON="$PROJ/entry/src/main/module.json5"
 
@@ -63,7 +66,7 @@ case "$target" in
   "phone"
 ],'
     echo '已切到 HarmonyOS（"6.1.0(23)" × 2、无 compileSdkVersion、deviceTypes=["phone"]）。'
-    echo '需要 HarmonyOS Command Line Tools 或 DevEco Studio 才能编译；本机没有，切到这一侧就编不过。'
+    echo '需要 HarmonyOS Command Line Tools 或 DevEco Studio 才能编译；本机没有，切到这一侧编不过。'
     ;;
   ohos|openharmony|OpenHarmony)
     replace_block "$BUILD_PROFILE" '        ' '
@@ -76,7 +79,7 @@ case "$target" in
   "default"
 ],'
     echo '已切到 OpenHarmony（整数 23 × 3 + compileSdkVersion、deviceTypes=["default"]）。'
-    echo '编译：source harmony/env.sh && cd harmony/HybridShell && devecocli build'
+    echo '编译：source harmony/env.sh ohos && cd harmony/Crab && devecocli build'
     ;;
   *)
     echo "用法：bash harmony/switch-runtime.sh [hos|ohos]" >&2
