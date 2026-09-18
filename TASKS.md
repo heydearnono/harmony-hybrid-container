@@ -1,6 +1,6 @@
 # 鸿蒙侧任务清单（M1–M5）
 
-最后更新：2026-09-17 ｜ 按 pro 的 commit **`e13f506`**
+最后更新：2026-09-18 ｜ 按 pro 的 commit **`e857625`**
 
 判据、取值、要不要做，全部只在 pro 那七份文件里；这份清单只做一件事：**把每个里程碑的「怎么算过」
 翻译成鸿蒙侧的动作**——落在哪个 API、动哪个文件、怎么验。判据一句也不复述，复述出来就是第二处真相。
@@ -68,10 +68,11 @@ pro 的 M1「要试出来的」里落在鸿蒙侧的两条，都不挡建工程�
 
 | 要核什么 | 怎么核 | 状态 |
 | --- | --- | --- |
-| 鸿蒙 `bundleName` 的字符规则 | 查官方声明（`python3 tools/hwdoc.py doc app-configuration-file`），再拿 `devecocli create --bundle-name` 试一个 | 部分：`net.xiaoluzhu.crab` 被 CLI 收下（全小写、点分三段），**官方字符规则的声明还没查到** |
-| 鸿蒙上架之后能否改 `bundleName` | 查 AppGallery 的声明 | 未做 |
+| 鸿蒙 `bundleName` 的字符规则 | 查官方声明（`python3 tools/hwdoc.py doc app-configuration-file`），再拿 `devecocli create --bundle-name` 试一个 | ✅ 已核（2026-09-18），规则原文与 `net.xiaoluzhu.crab` 的逐条对账已写进 pro 的 M1 标识那一节 |
+| 鸿蒙上架之后能否改 `bundleName` | 查 AppGallery 的声明（`hwdoc.py doc agc-help-create-app-0000002247955506`） | ✅ 已核（2026-09-18），结论「AGC 建应用时就锁死、不是上架后才锁」同上落在 pro |
 
-两条都只决定 pro 里那句「形状核过」的依据能不能站住，**不改取值**。核出来回 pro 改文档。
+两条都只决定 pro 里那句「形状核过」的依据能不能站住，**取值未改**。规则原文不复述在本仓——它是平台
+声明，归 pro。剩下的一条（iOS 的 bundle id 收不收下划线）不在鸿蒙侧。
 
 ### 对账
 

@@ -4,7 +4,7 @@
 应用名 `Crab`／中文「螃蟹」，标识 `net.xiaoluzhu.crab`，产物 HAP，鸿蒙走 **HarmonyOS NEXT**，
 不走 OpenHarmony。
 
-**按的是 pro 的 commit `e13f506`。** pro 会动（插队 spike 的答案回来、出口 2/3 议完都要改文档），
+**按的是 pro 的 commit `e857625`。** pro 会动（插队 spike 的答案回来、出口 2/3 议完都要改文档），
 往下一个里程碑走之前重读它的 `README.md` + `plan/` 五份 + `开工.md`，并更新这一行。
 
 判据不在本仓。要做什么、怎么算过、有什么还没核实，只在 pro 那七份文件里；取值只在 pro 的取值表。
