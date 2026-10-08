@@ -37,8 +37,8 @@
 | M5 三端汇合 | ⬜ 未开工 |
 
 **M1 一过要插队两条 spike**：① 模拟器上 ArkWeb 跑不跑得起来，顺带 `resource://` 的 origin 与子资源；
-② `data:` iframe 加不加载得起来。答案先回 pro 改文档再往 M2 走。**代码已写**（已过 OpenHarmony API 23 编译，
-未在 HarmonyOS SDK 上编译，未运行），待在另一台机器上跑，怎么跑见 [`TASKS.md`](TASKS.md) 的「插队 spike」一节。
+② `data:` iframe 加不加载得起来。答案先回 pro 改文档再往 M2 走。**✅ 已运行验证**（2026-10-08）：
+ArkWeb 在模拟器上起得来，两条都有答案，见 [运行记录](docs/运行记录/插队-ArkWeb.md)。
 
 ## 怎么编译
 

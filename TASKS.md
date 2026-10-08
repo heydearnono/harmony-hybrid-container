@@ -6,7 +6,7 @@
 翻译成鸿蒙侧的动作**——落在哪个 API、动哪个文件、怎么验。判据一句也不复述，复述出来就是第二处真相。
 pro 会动，往下一个里程碑走之前重读它，并更新上面那个 commit。
 
-**M1 已过，插队 spike 代码已写、待跑；M2–M5 只到「哪个 API / 哪个回调 / 哪条单测」为止**，不展开实现——
+**M1 已过，插队 spike 已跑完、答案回了 pro；M2–M5 只到「哪个 API / 哪个回调 / 哪条单测」为止**，不展开实现——
 形状还没在一个能跑的容器上验过，写细了只是把猜测钉死。
 
 ---
@@ -20,7 +20,7 @@ pro 会动，往下一个里程碑走之前重读它，并更新上面那个 com
 | --- | --- | --- | --- | --- |
 | 构建通过 | DevEco Studio 里 Build（`hvigorw clean … assembleHap`） | 整个 `harmony/Crab/` | `BUILD SUCCESSFUL` | ✅ **已运行验证**：Studio 6.1.0 · HarmonyOS SDK `6.1.0.105`，带 `clean` 从头编，`BUILD SUCCESSFUL in 5 s 385 ms`。**入库的 HarmonyOS 侧配置第一次过了编译器** |
 | 产物是 HAP | 同上 | — | 同上 | ✅ 产物 `hos_hap`，未签名（`Will skip sign 'hos_hap'`） |
-| 装进模拟器能起来 | `hdc install` + 起 Ability | — | 屏幕上出现那个原生页面 | ✅ **已运行验证**：模拟器经 `hdc` 连 `127.0.0.1:5555`，`bm dump -a` 列得出包。⚠️ 装法没留输出：未签名直装还是 Studio 自动签名后装，答不了 |
+| 装进模拟器能起来 | `hdc install` + 起 Ability | — | 屏幕上出现那个原生页面 | ✅ **已运行验证**：模拟器经 `hdc` 连 `127.0.0.1:5555`，`bm dump -a` 列得出包。未签名 HAP 直接 `hdc install` 装上、`aa start` 起来，原文在[运行记录](docs/运行记录/M1.md) |
 | 屏幕上有一个原生页面 | `Index.ets` 一个最小页面（`Column` + `Text`），不引 `@kit.ArkWeb` | `harmony/Crab/entry/src/main/ets/pages/Index.ets` | 装上之后人眼看一次 | ✅ **已运行验证**，截图 `M1/1-原生页面.jpg`。那一版 `Index.ets` 在 `568fff2`；之后被插队 spike 改写，见下 |
 | 标识 `net.xiaoluzhu.crab` | `bundleName` | `harmony/Crab/AppScope/app.json5` | 字符串在工程里只出现一处 | ✅ 设备上 `bm dump` 读回 `net.xiaoluzhu.crab` |
 | 应用名 `Crab` ＋ 中文「螃蟹」 | `label` 走 `$string:app_name`，中文落一份 `zh_CN` 限定词资源 | `AppScope/resources/base/element/string.json` ＋ `AppScope/resources/zh_CN/element/string.json` | 装上之后看桌面图标下的名字 | ✅ **已运行验证**：英文系统 `Crab`、中文系统「螃蟹」，有截图；`bm dump` 里应用与入口 Ability 的 `label` 都是资源引用 |
@@ -56,7 +56,10 @@ pro 的 `开工.md` 排的是「M1 一过立刻插队，不等 M2 开工」，�
 | 模拟器上 ArkWeb 跑不跑得起来，顺带 `resource://` 的 origin 与子资源 | M2「要试出来的」前两条 | **更大的一层是「模拟器能不能当验收面」——跑不起来则 M2–M4 在鸿蒙侧没有观察面，属范围级，回 pro 议，不得改成真机验收** |
 | `data:` iframe 加不加载得起来，不行就地试 `sandbox` + `srcdoc` | M3「要试出来的」第一条（只剩鸿蒙） | 它是 M3 `inject-scope` 的载体；换退路则三端一起换 |
 
-**代码已写，✅ 已过 OpenHarmony API 23 编译（2026-10-08），未在 HarmonyOS SDK 上编译，未运行。**
+**✅ 已运行验证（2026-10-08，HarmonyOS SDK `6.1.0.105` · 模拟器 API 23），[运行记录](docs/运行记录/插队-ArkWeb.md)。** ArkWeb 在模拟器上起得来；
+`origin` 是 `"resource://rawfile"`（不 opaque）、`isSecureContext` 为 `true`；同目录经典脚本与图片加载上，`fetch`
+被拒（`URL scheme "resource" is not supported`）；`data:` 与 `sandbox` + `srcdoc` 两个 iframe 都加载、都
+`postMessage` 回得来，子帧 origin 都是 `"null"`。这些平台事实已写进 pro 的 M2 / M3，判据怎么动以 pro 为准。
 
 | 改了什么 | 文件 |
 | --- | --- |
@@ -112,7 +115,7 @@ HTTP server。
 | 承载 origin 在端内只定义一处 | 一个 ArkTS 常量（位置随承载代码定），喂给三处：`onInterceptRequest` 的映射判定、`ScriptItem.scriptRules`（**须以 `://` 结尾**）、`onLoadIntercept` 的放行判定 | **一条可执行检查**：扫源码树断言该字符串只出现一处（单测或构建期脚本，走查不算） |
 | 不得读到承载目录之外的文件，含 `%2e%2e%2f` | 拦截点里做路径归一化 | 两条越界断言 + **一条路径归一化单测** |
 | 访问网页要声明的权限 | `module.json5` 的 `requestPermissions` 里的 `ohos.permission.INTERNET`（system_grant，声明即可；插队 spike 时已加） | 编译过 + 页面能打开；⚠️ 全部请求都被拦截点接住时是否仍需这条，pro 的 M2「要试出来的」里有一格 |
-| `resource://` 那条路 | 拿 `$rawfile` 直接承载跑 `origin` 与 `subresource` 两条 | 就是插队 spike 那一跑，见上 |
+| `resource://` 那条路 | 拿 `$rawfile` 直接承载跑 `origin` 与 `subresource` 两条 | ✅ 插队 spike 已答：origin 与经典子资源成立、`fetch` 不成立，[运行记录](docs/运行记录/插队-ArkWeb.md)。承载仍按 pro 走自编 https 域名 |
 
 不用 `WebSchemeHandler`：`onInterceptRequest` 够了，而前者必须在结束回调里清理资源，多一处泄漏面。
 真要用（取 POST body）时再换。
@@ -156,7 +159,7 @@ HTTP server。
 | ⚠️ 「共享渲染进程」这个前提本身 | `setRenderProcessMode()` / `getRenderProcessMode()` 是**静态方法**，传枚举外的值自动按多进程处理 | 不设它；上面那条幂等的前提就是「没人碰过这个开关」 |
 
 四个日志前缀 `CRAB-NAV` / `CRAB-DLG` / `CRAB-PERM` / `CRAB-ERR` 的取值在 pro 的取值表，本仓不另写。
-打到 hilog，`probe.sh` 用 `hdc hilog` 回读（⚠️ 这条路还没跑过，插队 spike 的 `hilog -x -T CrabSpike` 是第一次；取不回来则靠日志判的那五条退回
+打到 hilog，`probe.sh` 用 `hdc hilog` 回读（⚠️ 命令行这条路还没走通：插队 spike 的日志是从 Studio 的 HiLog 面板取的，那一刻终端里 `hdc` 没连上设备；取不回来则靠日志判的那五条退回
 `MANUAL`，pro 的 M4「要试出来的」有这一格）。
 
 ---
@@ -181,5 +184,5 @@ HTTP server。
 按里程碑分批加，形状与那五条规约在 pro 的 M2 最后一节，**三端一字不差、本仓不复述**。
 
 `scripts/probe.sh` 现在是骨架：十六条 slug 与固定顺序已固化，判定全部输出 `FAIL not-implemented`。
-要把它填满，缺的三件按顺序是：插队 spike 答掉（模拟器能不能当验收面）→ M2 的承载与探针页 → 脚本自己那四段（起模拟器装 HAP →
+要把它填满，缺的两件按顺序是：M2 的承载与探针页 → 脚本自己那四段（起模拟器装 HAP →
 人工那一遍 → 回读 hilog → 判定）。**人工那一遍在命令之前跑完，命令不代按。**

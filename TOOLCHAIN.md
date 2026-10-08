@@ -36,6 +36,8 @@
 | HarmonyOS SDK | Studio 自带 `6.1.0.105`（API 23，`releaseType` Release），`Contents/sdk/default/` 下**只有这一档** |
 | `hdc` | **不在默认 PATH 里**，在 `/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/` |
 | 模拟器 | `hdc list targets` 读到 `127.0.0.1:5555` |
+| 模拟器镜像 | 只下了 HarmonyOS 6.1.0(23) 一档，放在 `/Users/wangjian/Library/Huawei/Sdk`（不在 Studio 的 app 包里）。Studio 的「DevEco 虚拟设备配置」里那一档显示删除图标、其余显示下载图标 |
+| `hdc` 掉线 | 模拟器关掉或断开后 `hdc list targets` 回 `[Empty]`，此后每条命令报 `[Fail]ExecuteCommand need connect-key?`。在 Studio 的设备管理里重启模拟器；仍连不上试 `hdc tconn 127.0.0.1:5555`、`hdc kill -r`（⚠️ 这两条还没在那台上确认过管用） |
 
 ```sh
 export PATH="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains:$PATH"
@@ -273,8 +275,9 @@ M1 的「装进模拟器」正好撞在这个形状上，所以工程里预先�
 - OpenHarmony 侧签名材料齐：toolchains 自带 `OpenHarmony.p12`、`OpenHarmonyProfileDebug.pem`、
   `UnsgnedDebugProfileTemplate.json`，不需要华为证书、不需要实名认证。本仓未配 `signingConfigs`。
 - HarmonyOS 真机调试要**实名认证 + AGC 签名**，这一步谁也代办不了。
-- ⚠️ **HarmonyOS 模拟器收不收未签名 HAP 未核**：2026-10-08 那次产物未签名（`Will skip sign 'hos_hap'`），
-  应用也装上了，但 `hdc install` 的输出没留，分不清是直装还是 Studio 运行时自动签了名。下次装要留输出。
+- **HarmonyOS 模拟器（API 23）收未签名 HAP**（2026-10-08 实测）：工程无 `signingConfigs`，卸掉后
+  `hdc install entry-default-unsigned.hap` → `install bundle successfully`，`aa start` 起得来。原文在
+  [`docs/运行记录/M1.md`](docs/运行记录/M1.md#装法未签名-hap-直接装)。模拟器上跑不需要签名
 - 签名证书、私钥、`.p12` / `.cer` / `.p7b`、AGC 账号信息**一律不入库**。
 
 ## 遇到新坑怎么记
