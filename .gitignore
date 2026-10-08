@@ -11,6 +11,8 @@ local.properties
 *.hsp
 *.har
 .idea/
+# DevEco Studio 的应用分析工具打开工程时生成
+.appanalyzer/
 .clangd
 .clang-format
 .clang-tidy
