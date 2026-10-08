@@ -1,14 +1,15 @@
 # 工具链与构建陷阱（鸿蒙侧工程事实）
 
-最后更新：2026-09-17
+最后更新：2026-10-08
 
 这份文件是重建时 `docs/` 分流的另一半：**端侧工程事实**（工具链咬合、构建配置陷阱、错误码速查）。
 另一半（平台声明与仍成立的技术约束）已搬进 pro 对应里程碑的「平台事实」块，本仓不留副本。
 
-**能编译，但编不出交付物。** 本机只有免登录的 OpenHarmony API 23 链，能出 OpenHarmony HAP；
-交付目标是 HarmonyOS NEXT 的 HAP，那一侧的 SDK 需华为账号登录下载，未就位。
+**本机写，另一台验。** 本机只有免登录的 OpenHarmony API 23 链，能出 OpenHarmony HAP，只算编译体检；
+交付物（HarmonyOS NEXT 的 HAP）的构建与模拟器运行在另一台 Mac 上，用 DevEco Studio 6.1.0 自带的 SDK
+（2026-10-08 起，见下面「另一台机器」）。
 
-全部装在 `~/.local/hmos-toolchain/`，自成一体，`rm -rf` 即卸载。**不进本仓库、不提交、不改
+本机的链全部装在 `~/.local/hmos-toolchain/`，自成一体，`rm -rf` 即卸载。**不进本仓库、不提交、不改
 `~/.zshrc`**——环境变量走 `source harmony/env.sh`。
 
 ## 现在有什么
@@ -21,7 +22,27 @@
 | OpenHarmony 链（hvigor 6.26.1 + ohpm + Node 22 + SDK 23） | ✅ 已就位、实测编译成功，全程免登录、逐件对过 sha256 | `clt-oh/`（version.txt: 26.0.0.461） |
 | HarmonyOS Command Line Tools ≥ 26.0.0 | ❌ 未就位，下载需华为账号登录 | 应放到 `command-line-tools/` |
 | `code-linter` | ❌ `clt-oh` 包内无实体，`$CLT/bin/codelinter` 只是个壳 | — |
-| 设备 / 模拟器 | ❌ 一个都没有 | — |
+| 设备 / 模拟器 | ❌ 本机一个都没有 | — |
+
+### 另一台机器（HarmonyOS 侧的构建与运行面）
+
+2026-10-08 起 M1 在这台上跑通，原样输出在 [`docs/运行记录/M1.md`](docs/运行记录/M1.md)。它只 pull、构建、装、
+贴回输出，**不提交**。
+
+| 组件 | 实测 |
+| --- | --- |
+| 机器 | macOS 27.0（`26A428`）· arm64 |
+| DevEco Studio | 6.1.0（`DS-243.24978.46.36.610860`） |
+| HarmonyOS SDK | Studio 自带 `6.1.0.105`（API 23，`releaseType` Release），`Contents/sdk/default/` 下**只有这一档** |
+| `hdc` | **不在默认 PATH 里**，在 `/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains/` |
+| 模拟器 | `hdc list targets` 读到 `127.0.0.1:5555` |
+
+```sh
+export PATH="/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/toolchains:$PATH"
+hdc list targets
+```
+
+那台的工作区里有旧的 `harmony/HybridShell/`、`1~`、`hm-evidence.txt`，是重建前的残留，不该提交。
 
 官方要求 CLT ≥ 26.0.0 配 JDK 21，26.0.0 以下配 JDK 17（`ide-command-line-building-app`）。
 
@@ -66,9 +87,8 @@ SDK 布局。构建期 hvigor 找的是 `$CLT/sdk/<apiVersion>/{ets,js,native,to
 读 `dist/cli.js` 的 `RI()`：下限硬编码 **17**，上限取 `getMaxApiLevel()`、取不到时回落硬编码 **23**。
 
 后果：工程锁在 API 23，也就是 pro 的 M1 定的 `6.1.0(23)` 正好是这条链的上限，不必迁就。
-⚠️ 但 HarmonyOS 现网主力是 **6.1.1(24)**（2026-08-20 占 84.93%，26.0.0 对应的 7.0.0 Beta2 仅 4.65%）。
-这条事实与它的代价已回给 pro（`plan/M1` 的版本档位那一节），**取值改不改是项目负责人的事**，本仓不自决。
-真 CLT 到位后要重新确认它带的 SDK 支持到哪一级。
+另一台机器上 Studio 6.1.0 自带的 HarmonyOS SDK 也只到 API 23（`6.1.0.105`），两侧同一档。
+取值本身归 pro 的 M1 版本档位那一节，本仓不自决。
 
 ## 两套 SDK 家族互斥，只能切、不能骗
 
@@ -93,13 +113,14 @@ SDK 布局。构建期 hvigor 找的是 `$CLT/sdk/<apiVersion>/{ets,js,native,to
 `sdk/23/ets/api/device-define/` 只有 `2in1/default/liteWearable/tablet/tv/wearable`，**没有 `phone`**，
 写 `phone` 报 `00303060 系统能力集交集为空`。
 
-⚠️ **仓库提交的是 HarmonyOS 侧的值，也就是入库那一份配置本身没被任何编译器验过**（本机没有
-HarmonyOS SDK）。跑通编译的是 `ohos` 那一侧。这是为了让别人下载后能用 DevEco Studio 直接打开而做的
-取舍，与 pro 的交付目标一致。
+仓库提交的是 HarmonyOS 侧的值。这一份配置 **2026-10-08 第一次过了编译器**：另一台机器上 Studio 6.1.0
+带 `clean` 从头编，`BUILD SUCCESSFUL`，`switch-runtime.sh` 没切（[运行记录](docs/运行记录/M1.md)）。本机仍只能编
+`ohos` 那一侧。
 
 ## 需要人做的一步
 
-编译本身不卡了；这一步解决的是「产物是 HarmonyOS HAP 而非 OpenHarmony HAP」，以及 M1 的「装进模拟器」。
+**另一台机器已经走通了另一条路**（DevEco Studio 6.1.0 自带 SDK + 模拟器，见上）。下面这几步只在要让**本机**
+也能出 HarmonyOS HAP、跑模拟器时才需要，现在不挡任何事。
 
 1. 打开 <https://developer.huawei.com/consumer/cn/download/command-line-tools-for-hmos>，登录下载
    **macOS ARM** 版（≥ 26.0.0）。动态验证码这一环 Agent 代办不了。
@@ -121,14 +142,14 @@ HarmonyOS SDK）。跑通编译的是 `ohos` 那一侧。这是为了让别人�
 2. **平台配置跟你的 SDK 对不对** —— 仓库默认是 HarmonyOS 侧。只有 OpenHarmony SDK 就先
    `bash harmony/switch-runtime.sh ohos`。
 3. **DevEco Studio 版本够不够新** —— 工程声明 `modelVersion: 6.1.0`，老 Studio 只认 `6.0.1`，
-   编译第一步就拦。
+   编译第一步就拦。**Studio 6.1.0 实测认**（2026-10-08）。
 4. **装不上不等于代码有问题** —— `00401004` 这类是设备能力/签名问题，跟 ArkTS 代码无关。
 
 ### 你走哪条路
 
 | 你的环境 | 平台配置 | 编译命令 | 产物 |
 | --- | --- | --- | --- |
-| DevEco Studio + HarmonyOS SDK | `switch-runtime.sh hos`（仓库默认） | Studio 里点 Build，或 `hvigorw assembleHap` | HarmonyOS HAP |
+| DevEco Studio + HarmonyOS SDK | `switch-runtime.sh hos`（仓库默认） | Studio 里点 Build，或 `hvigorw assembleHap` | HarmonyOS HAP（`hos_hap`）。Studio 6.1.0 实测过（2026-10-08） |
 | 只有命令行 + OpenHarmony SDK | `switch-runtime.sh ohos` | `source harmony/env.sh ohos && cd harmony/Crab && devecocli build` | OpenHarmony HAP |
 
 ### 错误速查表
@@ -138,7 +159,7 @@ HarmonyOS SDK）。跑通编译的是 `ohos` 那一侧。这是为了让别人�
 | `Select an OpenHarmony or HarmonyOS project` | 打开的目录不是工程根 | 打开 `harmony/Crab/` 这一级 → [#1](#1-选择工程时被拒) |
 | `The ArkTS SDK of version 23 in OpenHarmony is not found.[entry]` | 工程写着 OpenHarmony，你只有 HarmonyOS SDK | `switch-runtime.sh hos` → [#2](#2-两套-sdk-配错) |
 | `00303168 Configuration Error / SDK component missing.` | 反过来：工程写着 HarmonyOS，你只有 OpenHarmony SDK | `switch-runtime.sh ohos` → [#2](#2-两套-sdk-配错) |
-| `00303028 Unsupported modelVersion of Hvigor 6.1.0` | Studio 自带的 hvigor 只认 `6.0.1` | 升 Studio → [#3](#3-modelversion-对不上) |
+| `00303028 Unsupported modelVersion of Hvigor 6.1.0` | Studio 自带的 hvigor 只认 `6.0.1` | 升到 Studio 6.1.0 或以上 → [#3](#3-modelversion-对不上) |
 | `00303034 For the OpenHarmony project, Please configure compileSdkVersion` | OpenHarmony 侧必填这个字段 | `switch-runtime.sh ohos` 会带上 |
 | `00303060` 系统能力集交集为空 | `deviceTypes: ["phone"]` 在 OpenHarmony SDK 里不存在 | 同上，脚本会改成 `["default"]` |
 | `00303208 Unable to find 'sdk.dir' in 'local.properties' or 'OHOS_BASE_SDK_HOME'` | 没告诉 hvigor SDK 在哪 | `source harmony/env.sh ohos`，别往工程里塞 `local.properties` |
@@ -193,7 +214,8 @@ Error Message: Unsupported modelVersion of Hvigor 6.1.0.
 
 **建议升 Studio，而不是把工程降到 6.0.1**：工程还锁着 `compatibleSdkVersion: "6.1.0(23)"`，只认
 model 6.0.1 的 Studio 大概率也没有 API 23 SDK，降 modelVersion 只是把报错往后挪一格。
-⚠️ 具体哪个 Studio 版本带支持 6.1.0 的 hvigor，没查到可信来源，别照抄版本号。
+**DevEco Studio 6.1.0（`DS-243.24978.46.36.610860`）实测认 `modelVersion 6.1.0`**（2026-10-08，从头编过）。
+比它老的哪一版开始认，没查到可信来源，别往下推。
 
 真要降，把三样一起降到你实际装了的级别：`hvigor/hvigor-config.json5` 的 `modelVersion`、
 `oh-package.json5` 的 `modelVersion`、`build-profile.json5` 的三个 SDK 版本号。
@@ -238,7 +260,8 @@ M1 的「装进模拟器」正好撞在这个形状上，所以工程里预先�
 编译仍通过（2026-09-17 在重建后的 `harmony/Crab/` 上复核过一次，与上一轮工程同数）。
 
 ⚠️ **在 HarmonyOS 侧是否生效未核实**：那个 task 的 `doTaskAction()` 第一行是
-`if (this.targetData.isHarmonyOS()) return;`。HarmonyOS + Studio 下加了 `syscap.json` 还报 00401004，
+`if (this.targetData.isHarmonyOS()) return;`。2026-10-08 装进 HarmonyOS 模拟器时**没撞 `00401004`**，但那台
+机器上没读 `rpcid.json`，所以分不清是 `syscap.json` 起了作用、还是模拟器能力集本来就够——仍算未核。HarmonyOS + Studio 下加了 `syscap.json` 还报 00401004，
 就改 `deviceTypes` 去匹配目标设备类型。**但不要为了装上去而改成真机验收**——那是 pro 定的范围级问题，
 回 pro 议（pro 的 M2 与 M5 都有交代）。
 
@@ -250,6 +273,8 @@ M1 的「装进模拟器」正好撞在这个形状上，所以工程里预先�
 - OpenHarmony 侧签名材料齐：toolchains 自带 `OpenHarmony.p12`、`OpenHarmonyProfileDebug.pem`、
   `UnsgnedDebugProfileTemplate.json`，不需要华为证书、不需要实名认证。本仓未配 `signingConfigs`。
 - HarmonyOS 真机调试要**实名认证 + AGC 签名**，这一步谁也代办不了。
+- ⚠️ **HarmonyOS 模拟器收不收未签名 HAP 未核**：2026-10-08 那次产物未签名（`Will skip sign 'hos_hap'`），
+  应用也装上了，但 `hdc install` 的输出没留，分不清是直装还是 Studio 运行时自动签了名。下次装要留输出。
 - 签名证书、私钥、`.p12` / `.cer` / `.p7b`、AGC 账号信息**一律不入库**。
 
 ## 遇到新坑怎么记

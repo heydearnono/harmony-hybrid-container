@@ -4,7 +4,7 @@
 应用名 `Crab`／中文「螃蟹」，标识 `net.xiaoluzhu.crab`，产物 HAP，鸿蒙走 **HarmonyOS NEXT**，
 不走 OpenHarmony。
 
-**按的是 pro 的 commit `e857625`。** pro 会动（插队 spike 的答案回来、出口 2/3 议完都要改文档），
+**按的是 pro 的 commit `5ddc786`。** pro 会动（插队 spike 的答案回来、出口 2/3 议完都要改文档），
 往下一个里程碑走之前重读它的 `README.md` + `plan/` 五份 + `开工.md`，并更新这一行。
 
 判据不在本仓。要做什么、怎么算过、有什么还没核实，只在 pro 那七份文件里；取值只在 pro 的取值表。
@@ -20,6 +20,7 @@
 | [`TASKS.md`](TASKS.md) | M1–M5 的「怎么算过」逐条翻译成鸿蒙侧任务（pro 要求的第一件产出），落本仓、pro 不收 |
 | [`TOOLCHAIN.md`](TOOLCHAIN.md) | 鸿蒙侧工程事实：工具链现状、两套 SDK 互斥、错误码速查 |
 | [`ARKTS-RULES.md`](ARKTS-RULES.md) | AI 写 ArkTS 容易写错的点（R1–R22），逐条带出处 |
+| `docs/运行记录/` | 在模拟器上跑出来的原样输出与截图，一个里程碑或一次插队一份 |
 | `scripts/probe.sh` | 探针页验收命令，三仓同名，输出形状由 pro 定。**现在只有骨架** |
 | `tools/hwdoc.py` | 抓官方文档用（官方站是 Angular SPA，只能走接口） |
 
@@ -29,14 +30,15 @@
 
 | 里程碑 | 状态 |
 | --- | --- |
-| [M1 装到模拟器](TASKS.md#m1--装到模拟器) | 🟡 **已过 OpenHarmony API 23 编译，未在 HarmonyOS SDK 上编译，未运行**；「装进模拟器、屏幕上有一个原生页面」阻塞（见下） |
+| [M1 装到模拟器](TASKS.md#m1--装到模拟器) | ✅ **已运行验证**（2026-10-08，HarmonyOS SDK `6.1.0.105` · 模拟器 API 23），见 [运行记录](docs/运行记录/M1.md) |
 | M2 本地承载 | ⬜ 未开工。`scripts/probe.sh` 只有骨架 |
 | M3 配置注入与 UA | ⬜ 未开工 |
 | M4 导航与降级 | ⬜ 未开工 |
 | M5 三端汇合 | ⬜ 未开工 |
 
 **M1 一过要插队两条 spike**：① 模拟器上 ArkWeb 跑不跑得起来，顺带 `resource://` 的 origin 与子资源；
-② `data:` iframe 加不加载得起来。答案先回 pro 改文档再往 M2 走。两条都被同一个阻塞挡着。
+② `data:` iframe 加不加载得起来。答案先回 pro 改文档再往 M2 走。**代码已写**（已过 OpenHarmony API 23 编译，
+未在 HarmonyOS SDK 上编译，未运行），待在另一台机器上跑，怎么跑见 [`TASKS.md`](TASKS.md) 的「插队 spike」一节。
 
 ## 怎么编译
 
@@ -51,16 +53,11 @@ bash harmony/switch-runtime.sh hos       # 提交前切回来
 [`TOOLCHAIN.md`](TOOLCHAIN.md#三分钟检查清单) 的三分钟检查清单，工具链本身的状态在
 [`TOOLCHAIN.md`](TOOLCHAIN.md#现在有什么)。
 
-## 阻塞在哪
+## 在哪跑
 
-**没有 HarmonyOS SDK，也没有模拟器镜像。** 本机唯一能编译的是免登录的 OpenHarmony API 23 链，
-它出的是 OpenHarmony HAP，装不进 HarmonyOS NEXT。后果有两层：
-
-- M1 的「装进模拟器、屏幕上有一个原生页面」观察不了，**M1 不能宣布过**
-- M2 到 M4 每一条判据都靠模拟器观察，一条都跑不了；`scripts/probe.sh` 因此只能是骨架
-
-解法是人工的一步：登录华为开发者账号下载 Command Line Tools 与模拟器镜像，步骤在
-[`TOOLCHAIN.md`](TOOLCHAIN.md#需要人做的一步)。动态验证码那一环 Agent 代办不了。
+**本机写，另一台验。** 本机没有 HarmonyOS SDK 与模拟器，只有免登录的 OpenHarmony API 23 链，出的是
+OpenHarmony HAP、只算编译体检。HarmonyOS 侧的构建与模拟器运行在另一台 Mac 上做（DevEco Studio 6.1.0，
+自带 SDK `6.1.0.105`），那台只 pull、构建、装、贴回输出，不提交。运行记录落 [`docs/运行记录/`](docs/运行记录/)。
 
 ⚠️ 顺带一个还没解决的口径冲突：官方指南说 ArkWeb 支持模拟器，而 `arkts-apis-webview` 的模块页写
 「示例效果请以真机运行为准」。**模拟器上跑不起来时不得自行改成真机验收**——那是范围级的事，回 pro 议
