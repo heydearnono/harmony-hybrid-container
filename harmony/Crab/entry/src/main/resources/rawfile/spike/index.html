@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crab · 插队 spike</title>
+<style>
+  body { font: 13px/1.6 monospace; margin: 12px; word-break: break-all; }
+</style>
+</head>
+<body>
+<p>Crab · 插队 spike（M1 之后、M2 之前，一次性）</p>
+<ol id="out"></ol>
+<!--
+  插队两条：① ArkWeb 在模拟器上起不起得来，顺带 resource:// 的 origin 与子资源；② data: iframe 加不加载
+  得起来，不行就地看 sandbox + srcdoc 那条退路。问题与判据在 pro 的 M2 / M3「要试出来的」，这里不复述。
+
+  这一页只报「观察到什么」，不判 PASS / FAIL。每条既写进页面（截图用），也打一行 console，
+  由原生 onConsole 转进 hilog（tag CrabSpike）。形状一行一条：`SPIKE <key> <value>`。
+  不是探针页：M2 的探针页另写，slug 与输出形状照 pro 的 M2 最后一节。
+-->
+<script>
+  var EXPECTED = ['href', 'origin', 'secure-context', 'ua', 'subresource-script', 'subresource-img',
+    'subresource-fetch', 'iframe-data', 'iframe-srcdoc'];
+  var seen = {};
+  function report(key, value) {
+    seen[key] = true;
+    var line = 'SPIKE ' + key + ' ' + value;
+    var li = document.createElement('li');
+    li.textContent = line;
+    document.getElementById('out').appendChild(li);
+    console.log(line);
+  }
+  report('href', location.href);
+  // JSON 引号是为了分清字符串 "null"（opaque）与空串
+  report('origin', JSON.stringify(location.origin));
+  report('secure-context', String(window.isSecureContext));
+  report('ua', navigator.userAgent);
+</script>
+<!-- 子资源三种，都走相对路径：经典脚本与图片不走 CORS，fetch 走 -->
+<script src="probe.js" onerror="report('subresource-script', 'error')"></script>
+<img src="probe.png" width="16" height="16" alt=""
+  onload="report('subresource-img', 'loaded ' + this.naturalWidth + 'x' + this.naturalHeight)"
+  onerror="report('subresource-img', 'error')">
+<script>
+  fetch('probe.txt').then(function (r) {
+    return r.text().then(function (t) {
+      report('subresource-fetch', 'status=' + r.status + ' body=' + JSON.stringify(t.trim()));
+    });
+  }).catch(function (e) {
+    report('subresource-fetch', 'error ' + e);
+  });
+
+  // 子帧自报，经 postMessage 交回父页面；__CRAB__ 现在没人注入，只为和 M3 inject-scope 同一个形状
+  var CHILD = '<script>parent.postMessage(JSON.stringify({kind:KIND,origin:String(self.origin),' +
+    'crab:typeof window.__CRAB__}),"*")<\/script>';
+  window.addEventListener('message', function (e) {
+    var d;
+    try { d = JSON.parse(e.data); } catch (x) { return; }
+    report('iframe-' + d.kind, 'message origin=' + JSON.stringify(d.origin) +
+      ' event.origin=' + JSON.stringify(e.origin) + ' __CRAB__=' + d.crab);
+  });
+  function addFrame(kind, setup) {
+    var f = document.createElement('iframe');
+    f.width = '1';
+    f.height = '1';
+    f.style.border = '0';
+    // onload 来了而 message 没来 = 子帧起来了但脚本没跑或消息没回
+    f.onload = function () { report('iframe-' + kind + '-onload', 'fired'); };
+    setup(f, CHILD.replace('KIND', JSON.stringify(kind)));
+    document.body.appendChild(f);
+  }
+  addFrame('data', function (f, html) {
+    f.src = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+  });
+  // 退路：sandbox 不带 allow-same-origin，子帧 origin 同样是 opaque
+  addFrame('srcdoc', function (f, html) {
+    f.setAttribute('sandbox', 'allow-scripts');
+    f.srcdoc = html;
+  });
+
+  setTimeout(function () {
+    var missing = 0;
+    EXPECTED.forEach(function (k) {
+      if (!seen[k]) { missing++; report(k, 'no-answer'); }
+    });
+    report('done', 'missing=' + missing);
+  }, 5000);
+</script>
+</body>
+</html>

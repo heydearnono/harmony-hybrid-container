@@ -12,6 +12,14 @@
     // 同上：由 harmony/switch-runtime.sh 重写。OpenHarmony 的 device-define 里没有 phone，
     // 那一侧必须是 default，否则 00303060「系统能力集交集为空」。
     // ⚠️ deviceTypes 还决定 rpcid 要求的 syscap 全集，见同目录 syscap.json。
+    // INTERNET 是插队 spike 加的：pro 的 M2 平台事实记着漏声明的表现是白屏、不报错，
+    // 而这一跑要答的正是「ArkWeb 在模拟器上起不起得来」——不声明的话白屏分不清是哪个原因。
+    // 只加载 $rawfile 时到底需不需要它，是 M2「要试出来的」那一格，这一跑不答。
+    "requestPermissions": [
+      {
+        "name": "ohos.permission.INTERNET"
+      }
+    ],
     "deliveryWithInstall": true,
     "installationFree": false,
     "pages": "$profile:main_pages",
